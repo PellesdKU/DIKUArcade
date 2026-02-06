@@ -19,7 +19,7 @@ course at DIKU (Department of Computer Science, University of Copenhagen) 2018, 
 
 * An audio engine for effects and music.
 * Newtonian force functions for artificial gravity.
-* More throrough unit-testing.
+* More thorough unit-testing.
 * GUI Framework.
 
 ### Development ###
