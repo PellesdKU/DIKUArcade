@@ -46,24 +46,49 @@ public class GameTimer {
     public GameTimer() : this(30, 30) { }
 
     public GameTimer(uint ups, uint fps = 0) {
-        unlimitedFps = fps == 0;
-        doUpdate = ups != 0;
-
-        // 1 TimeSpan tick is 100ns, of which there are 10 million in a second
-        updatePeriod = new TimeSpan(doUpdate ? 10_000_000 / ups : 0);
-        renderPeriod = new TimeSpan(unlimitedFps ? 0 : 10_000_000 / fps);
-        resetPeriod = new TimeSpan(10_000_000); // reset is always once per second
-
         stopwatch = new Stopwatch();
         stopwatch.Start();
-
         TimeSpan now = stopwatch.Elapsed;
-        (nextUpdate, nextRender, nextReset) = (now + updatePeriod, now + renderPeriod, now + resetPeriod);
+
+        // 1 TimeSpan tick is 100ns, of which there are 10 million in a second
+        resetPeriod = new TimeSpan(10_000_000); // reset is always once per second
+        nextReset = now + resetPeriod;
+
+        SetUps(ups, now);
+        SetFps(fps, now);
 
         frames = 0;
         updates = 0;
         CapturedFrames = 0;
         CapturedUpdates = 0;
+    }
+
+    /// <summary>
+    /// Set a new update rate. Will schedule the next update one period from now.
+    /// </summary>
+    /// <param name="ups">The new updates per second value.</param>
+    public void SetUps(uint ups) {
+        SetUps(ups, stopwatch.Elapsed);
+    }
+
+    private void SetUps(uint ups, TimeSpan now) {
+        doUpdate = ups != 0;
+        updatePeriod = new TimeSpan(doUpdate ? 10_000_000 / ups : 0);
+        nextUpdate = now + updatePeriod;
+    }
+
+    /// <summary>
+    /// Set a new framerate. Will schedule the next render one period from now.
+    /// </summary>
+    /// <param name="fps">The new frames per second value.</param>
+    public void SetFps(uint fps) {
+        SetFps(fps, stopwatch.Elapsed);
+    }
+
+    private void SetFps(uint fps, TimeSpan now) {
+        unlimitedFps = fps == 0;
+        renderPeriod = new TimeSpan(unlimitedFps ? 0 : 10_000_000 / fps);
+        nextRender = now + renderPeriod;
     }
 
     public bool ShouldUpdate() {
