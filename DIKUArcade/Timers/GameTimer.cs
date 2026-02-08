@@ -15,12 +15,12 @@ using System.Threading;
 ///
 /// </summary>
 public class GameTimer {
-    private long nextUpdate;
-    private long nextRender;
-    private long nextReset;
-    private long updatePeriod; // milliseconds
-    private long renderPeriod; // milliseconds
-    private long resetPeriod; // milliseconds
+    private TimeSpan nextUpdate;
+    private TimeSpan nextRender;
+    private TimeSpan nextReset;
+    private TimeSpan updatePeriod;
+    private TimeSpan renderPeriod;
+    private TimeSpan resetPeriod;
 
     /// <summary>
     /// Get the last observed UPS count
@@ -38,31 +38,27 @@ public class GameTimer {
     private int updates;
     private int frames;
 
-    private uint desiredMaxFPS;
+    private bool unlimitedFps;
+    private bool doUpdate;
 
     private Stopwatch stopwatch;
 
     public GameTimer() : this(30, 30) { }
 
     public GameTimer(uint ups, uint fps = 0) {
-        if (ups == 0) {
-            throw new ArgumentOutOfRangeException(nameof(ups),
-                "Updates per second must be greater than 0");
-        }
+        unlimitedFps = fps == 0;
+        doUpdate = ups != 0;
 
-        desiredMaxFPS = fps;
-
-        updatePeriod = ups > 0 ? (long) (1000f / ups) : 0;
-        renderPeriod = fps > 0 ? (long) (1000f / fps) : 0;
-        resetPeriod = 1000; // reset is always once per second
+        // 1 TimeSpan tick is 100ns, of which there are 10 million in a second
+        updatePeriod = new TimeSpan(doUpdate ? 10_000_000 / ups : 0);
+        renderPeriod = new TimeSpan(unlimitedFps ? 0 : 10_000_000 / fps);
+        resetPeriod = new TimeSpan(10_000_000); // reset is always once per second
 
         stopwatch = new Stopwatch();
         stopwatch.Start();
 
-        long elapsed = stopwatch.ElapsedMilliseconds;
-        nextUpdate = elapsed + updatePeriod;
-        nextRender = elapsed + renderPeriod;
-        nextReset = elapsed + resetPeriod;
+        TimeSpan now = stopwatch.Elapsed;
+        (nextUpdate, nextRender, nextReset) = (now + updatePeriod, now + renderPeriod, now + resetPeriod);
 
         frames = 0;
         updates = 0;
@@ -71,7 +67,11 @@ public class GameTimer {
     }
 
     public bool ShouldUpdate() {
-        var update = stopwatch.ElapsedMilliseconds >= nextUpdate;
+        if (!doUpdate) {
+            return false;
+        }
+        var now = stopwatch.Elapsed;
+        var update = now >= nextUpdate;
         if (update) {
             updates++;
             nextUpdate += updatePeriod;
@@ -80,34 +80,36 @@ public class GameTimer {
     }
 
     public bool ShouldRender() {
-        if (desiredMaxFPS < 1) {
+        if (unlimitedFps) {
+            frames++;
             return true;
         }
-        var now = stopwatch.ElapsedMilliseconds;
-        var update = now >= nextRender;
-        if (update) {
+
+        var now = stopwatch.Elapsed;
+        var render = now >= nextRender;
+        if (render) {
             frames++;
+            // skip missed frames, for example if we are vsync limited or rendering is taking too long
             while (now >= nextRender) {
-                // unlike with game updates, we don't want to rush and render a whole bunch of frames
-                // if we're behind, so we set the next render time to next one from the current time
                 nextRender += renderPeriod;
             }
         }
-        return update;
+        return render;
     }
 
     /// <summary>
-    /// Count the number of updates and frames each second.
+    /// The timer will reset if 1 second has passed.
     /// This information can be used to update game logic in any way desireable.
     /// </summary>
     public bool ShouldReset() {
-        var now = stopwatch.ElapsedMilliseconds;
+        var now = stopwatch.Elapsed;
         var reset = now >= nextReset;
         if (reset) {
+            // skip missed resets, as we want this to run as close to every second as possible
             while (now >= nextReset) {
-                // skip missed resets, as we want this to run as close to every second as possible
                 nextReset += resetPeriod;
             }
+
             CapturedUpdates = updates;
             CapturedFrames = frames;
             updates = 0;
@@ -117,19 +119,33 @@ public class GameTimer {
     }
 
     /// <summary>
+    /// Get the shortest of two time spans
+    /// </summary>
+    /// <returns>The shortest time span</returns>
+    private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
+
+    /// <summary>
     /// Sleeps until it's time to perform the next action so the OS can do other things in the meantime.
     /// Might sleep a bit too long (don't we all sometimes), but probably not so much that it's a problem.
     /// The next update times are calculated by the previous time and the period, so the average update
     /// frequency over a period should be accurate.
     /// </summary>
     public void Yield() {
-        var nextAction = Math.Min(Math.Min(nextRender, nextUpdate), nextReset);
-        // return immediately if we have pending actions
-        if (stopwatch.ElapsedMilliseconds >= nextAction) {
+        if (unlimitedFps) {
             return;
         }
 
-        int timeDelta = (int) (nextAction - stopwatch.ElapsedMilliseconds);
+        var nextAction = Min(nextRender, nextReset);
+        if (doUpdate) {
+            nextAction = Min(nextAction, nextUpdate);
+        }
+
+        // return immediately if we have pending actions
+        if (stopwatch.Elapsed >= nextAction) {
+            return;
+        }
+
+        var timeDelta = nextAction - stopwatch.Elapsed;
         Thread.Sleep(timeDelta);
     }
 }

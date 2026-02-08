@@ -26,8 +26,8 @@ public class GameTimerTest : ITestable {
         }
         while (win.IsRunning()) {
             win.PollEvents();
-            if (timer.ShouldUpdate()) {
 
+            if (timer.ShouldUpdate()) {
             }
 
             if (timer.ShouldRender()) {

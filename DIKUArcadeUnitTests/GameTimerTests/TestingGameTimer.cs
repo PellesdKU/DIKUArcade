@@ -7,6 +7,7 @@ using NUnit.Framework;
 public class TestingGameTimer {
 
     [Repeat(3)]
+    [TestCase(0u)]
     [TestCase(1u)]
     [TestCase(5u)]
     [TestCase(10u)]
@@ -27,12 +28,13 @@ public class TestingGameTimer {
 
         // Allow some tolerance for timing imprecision
         // Target is ups, but we might get a bit more or less
-        Assert.GreaterOrEqual(timer.CapturedUpdates, ups - 1);
+        if (ups > 0) {
+            Assert.GreaterOrEqual(timer.CapturedUpdates, ups - 1);
+        }
         Assert.LessOrEqual(timer.CapturedUpdates, ups + 5);
     }
 
     [Repeat(3)]
-    [TestCase(0u)]
     [TestCase(1u)]
     [TestCase(5u)]
     [TestCase(10u)]
@@ -43,7 +45,7 @@ public class TestingGameTimer {
         var frames = 0;
 
         while (!timer.ShouldReset()) {
-            if (timer.ShouldRender() && fps > 0) { // fps 0 will try to render unlimited!
+            if (timer.ShouldRender()) {
                 frames++;
             }
             timer.Yield();
@@ -52,10 +54,7 @@ public class TestingGameTimer {
         Assert.AreEqual(frames, timer.CapturedFrames);
 
         // Allow some tolerance for timing imprecision
-        // Only check bounds for non-zero fps (fps=0 means unlimited rendering)
-        if (fps > 0) {
-            Assert.GreaterOrEqual(timer.CapturedFrames, fps - 1);
-            Assert.LessOrEqual(timer.CapturedFrames, fps + 5);
-        }
+        Assert.GreaterOrEqual(timer.CapturedFrames, fps - 1);
+        Assert.LessOrEqual(timer.CapturedFrames, fps + 5);
     }
 }
