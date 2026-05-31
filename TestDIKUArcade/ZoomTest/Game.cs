@@ -2,13 +2,11 @@ namespace TestDIKUArcade.ZoomTest;
 
 using System;
 using System.Numerics;
-using System.Reflection;
 using DIKUArcade;
 using DIKUArcade.Entities;
 using DIKUArcade.Graphics;
 using DIKUArcade.GUI;
 using DIKUArcade.Input;
-using DIKUArcade.Physics;
 
 public class Game : DIKUGame {
     private Entity player;

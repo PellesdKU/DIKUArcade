@@ -1,4 +1,4 @@
-namespace DIKUArcade.Audio.Internal;
+namespace SDLAudio.Internal;
 
 using System.Runtime.InteropServices.Marshalling;
 

@@ -1,7 +1,6 @@
 namespace TestDIKUArcade.RealImageStridesTest;
 
 using System.Numerics;
-using System.Reflection;
 using DIKUArcade;
 using DIKUArcade.Entities;
 using DIKUArcade.Graphics;

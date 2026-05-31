@@ -1,7 +1,6 @@
 ﻿namespace DIKUArcade.Graphics;
 
 using System;
-using System.IO;
 using System.Numerics;
 using DIKUArcade.GUI;
 

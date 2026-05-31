@@ -1,9 +1,7 @@
 namespace TestDIKUArcade.RenderTextTest;
 
-using System;
 using System.Numerics;
 using DIKUArcade;
-using DIKUArcade.Entities;
 using DIKUArcade.Graphics;
 using DIKUArcade.GUI;
 using DIKUArcade.Input;

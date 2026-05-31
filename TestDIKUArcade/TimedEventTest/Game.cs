@@ -1,7 +1,6 @@
 namespace TestDIKUArcade.TimedEventTest;
 
 using System;
-using System.Collections.Generic;
 using DIKUArcade;
 using DIKUArcade.Events;
 using DIKUArcade.GUI;

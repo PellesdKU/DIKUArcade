@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using DIKUArcade.Entities;
 using DIKUArcade.GUI;
@@ -10,7 +9,7 @@ using DIKUArcade.Timers;
 
 /// <summary>
 /// Represents an animated image based on a sequence of textures, displaying a different texture
-/// at specified intervals to create animation effects. The animation is controlled by a frequency 
+/// at specified intervals to create animation effects. The animation is controlled by a frequency
 /// in milliseconds and can be started, stopped, or adjusted dynamically.
 /// </summary>
 public class ImageStride : IBaseImage {

@@ -1,9 +1,7 @@
 namespace TestDIKUArcade.GameTimerTest;
 
 using System;
-using System.Drawing;
 using System.Numerics;
-using DIKUArcade.Entities;
 using DIKUArcade.Graphics;
 using DIKUArcade.GUI;
 using DIKUArcade.Timers;

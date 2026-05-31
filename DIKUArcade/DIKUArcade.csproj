@@ -15,4 +15,8 @@
     <PackageReference Include="DIKU.Canvas" Version="2.1.0-alpha1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\SDLAudio\SDLAudio.csproj" />
+  </ItemGroup>
+
 </Project>

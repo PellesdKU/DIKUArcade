@@ -2,7 +2,6 @@ namespace DIKUArcade.Events;
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using DIKUArcade.GUI;
 using DIKUArcade.Input;
 using DIKUArcade.Timers;
@@ -32,7 +31,7 @@ public class GameEventBus {
     }
 
     /// <summary>
-    /// Initializes a new instance of the GameEventBus class with a specified window. 
+    /// Initializes a new instance of the GameEventBus class with a specified window.
     /// Registers a key event handler for the window.
     /// </summary>
     /// <param name="window">The window to which the key event handler will be attached.</param>
@@ -44,7 +43,7 @@ public class GameEventBus {
     }
 
     /// <summary>
-    /// Subscribes an Action delegate to the event bus, allowing it to listen for events 
+    /// Subscribes an Action delegate to the event bus, allowing it to listen for events
     /// of a specified type.
     /// </summary>
     /// <typeparam name="Arg">The type of event argument the Action will handle.</typeparam>

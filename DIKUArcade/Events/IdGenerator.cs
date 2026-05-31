@@ -1,6 +1,5 @@
 namespace DIKUArcade.Events;
 
-using System;
 using System.Collections.Generic;
 
 /// <summary>

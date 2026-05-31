@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-public class NewtonianForce {
+﻿public class NewtonianForce {
     //private Vector2 center;
 
     //private float falloff;

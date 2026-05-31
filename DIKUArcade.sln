@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DIKUArcadeUnitTests", "DIKU
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestDIKUArcade", "TestDIKUArcade\TestDIKUArcade.csproj", "{41BE7AB6-9611-4D99-8574-B5F6EEEE2D50}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Result", "Result\Result.csproj", "{1098834C-08E5-4220-ADEC-CA8028E2E892}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDLAudio", "SDLAudio\SDLAudio.csproj", "{5AD7F77D-A651-43FE-AB2B-E377788DCA92}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{41BE7AB6-9611-4D99-8574-B5F6EEEE2D50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41BE7AB6-9611-4D99-8574-B5F6EEEE2D50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41BE7AB6-9611-4D99-8574-B5F6EEEE2D50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1098834C-08E5-4220-ADEC-CA8028E2E892}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1098834C-08E5-4220-ADEC-CA8028E2E892}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1098834C-08E5-4220-ADEC-CA8028E2E892}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1098834C-08E5-4220-ADEC-CA8028E2E892}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AD7F77D-A651-43FE-AB2B-E377788DCA92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AD7F77D-A651-43FE-AB2B-E377788DCA92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AD7F77D-A651-43FE-AB2B-E377788DCA92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AD7F77D-A651-43FE-AB2B-E377788DCA92}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
