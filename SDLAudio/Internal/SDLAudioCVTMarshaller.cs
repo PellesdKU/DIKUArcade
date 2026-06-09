@@ -10,8 +10,8 @@ internal static unsafe class SDLAudioCVTMarshaller {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     internal struct Unmanaged {
         public int Needed;
-        public AudioFormat Src_format;
-        public AudioFormat Dst_format;
+        public SDLAudioFormat Src_format;
+        public SDLAudioFormat Dst_format;
         public double Rate_incr;
         public byte* Buf;
         public int Len;

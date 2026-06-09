@@ -4,12 +4,12 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 
-[CustomMarshaller(typeof(AudioSpec), MarshalMode.ManagedToUnmanagedRef, typeof(SDLAudioSpecMarshaller))]
-[CustomMarshaller(typeof(AudioSpec), MarshalMode.ManagedToUnmanagedOut, typeof(SDLAudioSpecMarshaller))]
+[CustomMarshaller(typeof(SDLAudioSpec), MarshalMode.ManagedToUnmanagedRef, typeof(SDLAudioSpecMarshaller))]
+[CustomMarshaller(typeof(SDLAudioSpec), MarshalMode.ManagedToUnmanagedOut, typeof(SDLAudioSpecMarshaller))]
 internal static unsafe class SDLAudioSpecMarshaller {
     internal struct Unmanaged {
         public int Freq;
-        public AudioFormat Format;
+        public SDLAudioFormat Format;
         public byte Channels;
         public byte Silence;
         public ushort Samples;
@@ -19,7 +19,7 @@ internal static unsafe class SDLAudioSpecMarshaller {
         public void* Userdata;
     }
 
-    public static Unmanaged ConvertToUnmanaged(AudioSpec managed) =>
+    public static Unmanaged ConvertToUnmanaged(SDLAudioSpec managed) =>
         new() {
             Freq = managed.Freq,
             Format = managed.Format,
@@ -34,7 +34,7 @@ internal static unsafe class SDLAudioSpecMarshaller {
             Userdata = null
         };
 
-    public static AudioSpec ConvertToManaged(Unmanaged unmanaged) =>
+    public static SDLAudioSpec ConvertToManaged(Unmanaged unmanaged) =>
         new() {
             Freq = unmanaged.Freq,
             Format = unmanaged.Format,

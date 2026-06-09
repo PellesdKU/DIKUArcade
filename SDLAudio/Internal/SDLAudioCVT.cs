@@ -6,8 +6,8 @@ using System.Runtime.InteropServices;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 internal struct SDLAudioCVT {
     public int Needed;
-    public AudioFormat Src_format;
-    public AudioFormat Dst_format;
+    public SDLAudioFormat Src_format;
+    public SDLAudioFormat Dst_format;
     public double Rate_incr;
     public IntPtr /* Uint8* */ Buf;
     public int Len;

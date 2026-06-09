@@ -14,12 +14,24 @@ public class Game : DIKUGame {
     public Game(WindowArgs windowArgs, AudioManager manager, SoundPlayer soundPlayer) : base(windowArgs) {
         this.soundPlayer = soundPlayer;
         this.manager = manager;
+
+        PlayContinous();
+    }
+
+    private void PlayContinous() {
+        soundPlayer.PlayProcedural(
+            t => 0.1f*float.Sin(t*440f*2f*float.Pi),
+            _ => false
+        );
+
+        soundPlayer.PlayLooping("TestDIKUArcade.Assets.block.wav")
+            .DoIfErr(err => Console.WriteLine("Couldn't play sound: {0}", err));
     }
 
     public override void KeyHandler(KeyboardAction action, KeyboardKey key) {
         if (action == KeyboardAction.KeyRelease) { return; }
 
-        soundPlayer.PlaySound("TestDIKUArcade.Assets.bounce.wav")
+        soundPlayer.PlayClip("TestDIKUArcade.Assets.bounce.wav")
             .DoIfErr(err => Console.WriteLine("Couldn't play sound: {0}", err));
     }
 
@@ -34,7 +46,10 @@ public class Game : DIKUGame {
             if (devices.Any()) {
                 manager.PlayerWithDevice(devices.Last())
                     .DoOrElse(
-                        player => soundPlayer = player,
+                        player => {
+                            soundPlayer = player;
+                            PlayContinous();
+                        },
                         err => Console.WriteLine("Couldn't reinitialize sound player: {0}", err)
                     );
             }

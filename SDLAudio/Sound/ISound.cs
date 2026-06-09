@@ -1,8 +1,14 @@
 namespace SDLAudio.Sound;
 
 using System;
+using Internal;
 
 public interface ISound {
-    public bool IsDone(uint playhead);
-    public ReadOnlySpan<byte> GetSamples(uint playhead, uint len);
+    internal SDLAudioFormat Format { get; }
+
+    uint SampleRate { get; }
+    byte Channels { get; }
+
+    bool IsDone(ulong playhead);
+    ReadOnlySpan<byte> GetSamples(ulong playhead, uint len);
 }

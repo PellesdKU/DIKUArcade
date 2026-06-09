@@ -63,14 +63,14 @@ internal static partial class SDLInternal {
     internal static partial int GetAudioDeviceSpec(
         int index,
         DeviceType deviceType,
-        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] out AudioSpec spec
+        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] out SDLAudioSpec spec
     );
 
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
     [LibraryImport(LIB_NAME, EntryPoint = "SDL_GetDefaultAudioInfo", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial int GetDefaultAudioInfo(
         out string name,
-        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] ref AudioSpec spec,
+        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] ref SDLAudioSpec spec,
         DeviceType deviceType
     );
 
@@ -79,8 +79,8 @@ internal static partial class SDLInternal {
     internal static partial SDLAudioDeviceID OpenAudioDevice(
         [MarshalAs(UnmanagedType.LPUTF8Str)] string? device,
         DeviceType deviceType,
-        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] ref AudioSpec desired,
-        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] out AudioSpec obtained,
+        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] ref SDLAudioSpec desired,
+        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] out SDLAudioSpec obtained,
         SDLAllowChange allowedChanges
     );
 
@@ -114,7 +114,7 @@ internal static partial class SDLInternal {
     internal static partial IntPtr LoadWAV_RW(
         IntPtr /* SDL_RWops* */ src,
         [MarshalUsing(typeof(BoolToIntMarshaller))] bool freesrc,
-        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] out AudioSpec spec,
+        [MarshalUsing(typeof(SDLAudioSpecMarshaller))] out SDLAudioSpec spec,
         out IntPtr /* Uint8 ** */ audioBuf,
         out uint audioLen
     );
@@ -127,12 +127,12 @@ internal static partial class SDLInternal {
     [LibraryImport(LIB_NAME, EntryPoint = "SDL_BuildAudioCVT")]
     internal static partial int BuildAudioCVT(
         [MarshalUsing(typeof(SDLAudioCVTMarshaller))] out SDLAudioCVT cvt,
-        AudioFormat src_format,
-        byte src_channels,
-        int src_rate,
-        AudioFormat dst_format,
-        byte dst_channels,
-        int dst_rate
+        SDLAudioFormat srcFormat,
+        byte srcChannels,
+        int srcRate,
+        SDLAudioFormat dstFormat,
+        byte dstChannels,
+        int dstRate
     );
 
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
@@ -144,10 +144,10 @@ internal static partial class SDLInternal {
     [UnmanagedCallConv(CallConvs = new Type[] { typeof(CallConvCdecl) })]
     [LibraryImport(LIB_NAME, EntryPoint = "SDL_NewAudioStream")]
     internal static partial IntPtr /* SDL_AudioStream* */ NewAudioStream(
-        AudioFormat src_format,
+        SDLAudioFormat src_format,
         byte src_channels,
         int src_rate,
-        AudioFormat dst_format,
+        SDLAudioFormat dst_format,
         byte dst_channels,
         int dst_rate
     );
@@ -181,7 +181,7 @@ internal static partial class SDLInternal {
     internal static partial void MixAudioFormat(
         IntPtr /* Uint8* */ dst,
         IntPtr /* Uint8* */ src,
-        AudioFormat format,
+        SDLAudioFormat format,
         uint len,
         int volume
     );

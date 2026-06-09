@@ -6,30 +6,43 @@ using System.IO;
 using System.Reflection;
 using Result;
 using SDLAudio;
-using SDLAudio.Sound;
+using SDLAudio.Device;
+using SDLAudio.Sound.Clip;
 
 public class SoundPlayer : IDisposable {
     private readonly SDLAudio sdlAudio;
-    private readonly AudioDevice device;
+    private readonly IAudioDevice device;
 
     public bool Invalid => device.Stopped;
 
-    private readonly Dictionary<string, SoundClip> sounds;
+    private readonly Dictionary<string, IClip> clips;
 
-    internal SoundPlayer(SDLAudio sdlAudio, AudioDevice device) {
-        sounds = new();
+    internal SoundPlayer(SDLAudio sdlAudio, IAudioDevice device) {
+        clips = new();
         this.sdlAudio = sdlAudio;
         this.device = device;
     }
 
-    public Result<PlayingSound, string> PlaySound(
+    public Result<IPlayingSound, string> PlayProcedural(
+        SoundGenerator generator,
+        Func<float, bool> isDone
+    ) => device.PlaySound(new ProceduralSound(generator, isDone, device.SampleRate, 1));
+
+    public Result<IPlayingSound, string> PlayLooping(
         string manifestResourceName,
         float volume = 1f
     ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
-            .AndThen(sound => device.PlaySound(sound, volume));
+            .AndThen(device.Looping)
+            .AndThen(looping => device.PlaySound(looping, volume));
 
-    private Result<SoundClip, string> GetClip(string manifestResourceName, Assembly assembly) {
-        if (sounds.TryGetValue(manifestResourceName, out SoundClip? value)) {
+    public Result<IPlayingSound, string> PlayClip(
+        string manifestResourceName,
+        float volume = 1f
+    ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
+            .AndThen(sound => device.PlayClip(sound, volume));
+
+    private Result<IClip, string> GetClip(string manifestResourceName, Assembly assembly) {
+        if (clips.TryGetValue(manifestResourceName, out IClip? value)) {
             return new(value);
         }
 
@@ -38,9 +51,9 @@ public class SoundPlayer : IDisposable {
             ?? throw new Exception($"{manifestResourceName} not found. " +
                                     "Make sure that the file is being embedded");
 
-            return SoundClip.FromWAV(sdlAudio, stream)
+            return sdlAudio.LoadWAV(sdlAudio, stream)
                 .AndThen(device.ConvertClip)
-                .DoIfOk(sound => sounds[manifestResourceName] = sound);
+                .DoIfOk(sound => clips[manifestResourceName] = sound);
         } catch (Exception err) {
             return new(err.ToString());
         }
