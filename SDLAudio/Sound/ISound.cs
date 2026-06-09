@@ -1,14 +1,20 @@
 namespace SDLAudio.Sound;
 
-using System;
-using Internal;
+using Format;
+using Result;
 
 public interface ISound {
-    internal SDLAudioFormat Format { get; }
-
     uint SampleRate { get; }
     byte Channels { get; }
 
     bool IsDone(ulong playhead);
-    ReadOnlySpan<byte> GetSamples(ulong playhead, uint len);
+
+    internal Result<Sound<Sample, Accu, Format>, string> Convert<Sample, Accu, Format>(
+        SDLAudio sdlAudio,
+        uint dstRate,
+        byte dstChannels
+    )
+        where Format : IAudioFormat<Sample, Accu>
+        where Sample : struct
+        where Accu : struct;
 }

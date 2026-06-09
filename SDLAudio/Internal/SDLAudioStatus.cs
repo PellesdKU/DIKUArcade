@@ -1,7 +1,7 @@
 namespace SDLAudio.Internal;
 
-enum SDL_AudioStatus {
-    SDL_AUDIO_STOPPED = 0,
-    SDL_AUDIO_PLAYING = 1,
-    SDL_AUDIO_PAUSED = 2,
+internal enum SDLAudioStatus {
+    STOPPED = 0,
+    PLAYING = 1,
+    PAUSED = 2,
 }

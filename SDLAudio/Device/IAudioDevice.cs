@@ -3,7 +3,6 @@ namespace SDLAudio.Device;
 using System;
 using Result;
 using Sound;
-using Sound.Clip;
 
 public interface IAudioDevice : IDisposable {
     bool Stopped { get; }
@@ -13,10 +12,9 @@ public interface IAudioDevice : IDisposable {
     byte Channels { get; }
 
     Result<IPlayingSound, string> PlaySound(ISound sound, float volume = 1f);
-    Result<IPlayingSound, string> PlayClip(IClip clip, float volume);
 
-    Result<IClip, string> ConvertClip(IClip clip);
-    Result<ISound, string> Looping(IClip src);
+    Result<ISound, string> Convert(ISound sound);
+    Result<ISound, string> Looping(ISound src);
 
     void Lock();
     void Unlock();

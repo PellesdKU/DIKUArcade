@@ -7,7 +7,7 @@ using System.Reflection;
 using Result;
 using SDLAudio;
 using SDLAudio.Device;
-using SDLAudio.Sound.Clip;
+using SDLAudio.Sound;
 
 public class SoundPlayer : IDisposable {
     private readonly SDLAudio sdlAudio;
@@ -15,7 +15,7 @@ public class SoundPlayer : IDisposable {
 
     public bool Invalid => device.Stopped;
 
-    private readonly Dictionary<string, IClip> clips;
+    private readonly Dictionary<string, ISound> clips;
 
     internal SoundPlayer(SDLAudio sdlAudio, IAudioDevice device) {
         clips = new();
@@ -32,17 +32,17 @@ public class SoundPlayer : IDisposable {
         string manifestResourceName,
         float volume = 1f
     ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
-            .AndThen(device.Looping)
-            .AndThen(looping => device.PlaySound(looping, volume));
+        .AndThen(device.Looping)
+        .AndThen(looping => device.PlaySound(looping, volume));
 
     public Result<IPlayingSound, string> PlayClip(
         string manifestResourceName,
         float volume = 1f
     ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
-            .AndThen(sound => device.PlayClip(sound, volume));
+        .AndThen(sound => device.PlaySound(sound, volume));
 
-    private Result<IClip, string> GetClip(string manifestResourceName, Assembly assembly) {
-        if (clips.TryGetValue(manifestResourceName, out IClip? value)) {
+    private Result<ISound, string> GetClip(string manifestResourceName, Assembly assembly) {
+        if (clips.TryGetValue(manifestResourceName, out ISound? value)) {
             return new(value);
         }
 
@@ -52,7 +52,7 @@ public class SoundPlayer : IDisposable {
                                     "Make sure that the file is being embedded");
 
             return sdlAudio.LoadWAV(sdlAudio, stream)
-                .AndThen(device.ConvertClip)
+                .AndThen(device.Convert)
                 .DoIfOk(sound => clips[manifestResourceName] = sound);
         } catch (Exception err) {
             return new(err.ToString());

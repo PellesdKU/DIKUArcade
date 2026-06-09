@@ -1,4 +1,4 @@
-namespace SDLAudio.Sound.Clip;
+namespace SDLAudio.Sound;
 
 using System;
 using System.Collections;
@@ -7,13 +7,11 @@ using System.Runtime.InteropServices;
 using Result;
 using Format;
 
-internal class Clip<Sample, Accu, Format> : Sound<Sample, Accu, Format>, IEnumerable<Sample>, IClip
+internal class Clip<Sample, Accu, Format> : Sound<Sample, Accu, Format>, IEnumerable<Sample>
     where Sample : struct
     where Accu : struct
     where Format : IAudioFormat<Sample, Accu>
 {
-    private readonly SDLAudio sdlAudio;
-
     private readonly byte[] rawData;
     private ReadOnlySpan<Sample> Data => MemoryMarshal.Cast<byte, Sample>(rawData);
 
@@ -33,35 +31,30 @@ internal class Clip<Sample, Accu, Format> : Sound<Sample, Accu, Format>, IEnumer
         return Data.Slice(index, len);
     }
 
-    public Result<Clip<NewSample, NewAccu, NewFormat>, string> ConvertTo<NewSample, NewAccu, NewFormat>(
-        uint newSampleRate,
-        byte newChannels
+    protected override Result<Sound<SampleTo, AccuTo, FormatTo>, string> Convert<SampleTo, AccuTo, FormatTo>(
+        SDLAudio sdlAudio, uint dstRate, byte dstChannels
     )
-        where NewFormat : IAudioFormat<NewSample, NewAccu>
-        where NewSample : struct
-        where NewAccu : struct
+        where SampleTo : struct
+        where AccuTo : struct
     => sdlAudio.Convert(
         rawData,
         Format.SDLFormat,
         Channels,
         SampleRate,
-        NewFormat.SDLFormat,
-        newChannels,
-        newSampleRate
-    ).MapOk(newData => new Clip<NewSample, NewAccu, NewFormat>(
-        sdlAudio,
+        FormatTo.SDLFormat,
+        dstChannels,
+        dstRate
+    ).MapOk(newData => new Clip<SampleTo, AccuTo, FormatTo>(
         newData,
-        newSampleRate,
-        newChannels
-    ));
+        dstRate,
+        dstChannels
+    ) as Sound<SampleTo, AccuTo, FormatTo>);
 
     public Clip(
-        SDLAudio sdlAudio,
         byte[] audioData,
         uint sampleRate,
         byte channels
     ) : base(sampleRate, channels) {
-        this.sdlAudio = sdlAudio;
         rawData = audioData;
     }
 

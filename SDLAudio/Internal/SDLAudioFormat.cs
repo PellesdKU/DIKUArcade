@@ -5,12 +5,12 @@ using System.Text;
 using Device;
 using Format;
 using Result;
-using Sound.Clip;
+using Sound;
 
 /// <summary>
 /// An audio format. A thin wrapper around SDL_AudioFormat, with some helper functions.
 /// </summary>
-public readonly struct SDLAudioFormat {
+internal readonly struct SDLAudioFormat {
     public static SDLAudioFormat U8 => new(0x0008);
     public static SDLAudioFormat S8 => new(0x8008);
     public static SDLAudioFormat U16LE => new(0x0010);
@@ -31,11 +31,11 @@ public readonly struct SDLAudioFormat {
     public readonly bool IsFloat => ((sdlFormat >> 8) & 0b1) == 1;
     public readonly byte SampleSize => (byte)(sdlFormat & 0b11111111);
 
-    internal SDLAudioFormat(ushort sdlFormat) {
+    public SDLAudioFormat(ushort sdlFormat) {
         this.sdlFormat = sdlFormat;
     }
 
-    internal Result<IAudioDevice, string> MakeDevice(
+    public Result<IAudioDevice, string> MakeDevice(
         SDLAudio audio,
         SDLAudioDeviceID id,
         DeviceCallbackProxy proxy,
@@ -66,31 +66,30 @@ public readonly struct SDLAudioFormat {
         }
     };
 
-    internal Result<IClip, string> MakeClip(
-        SDLAudio sdlAudio,
+    public Result<ISound, string> MakeClip(
         byte[] audioData,
         uint sampleRate,
         byte channels
     ) => IsFloat switch {
         true => IsBigEndian
-            ? new(new Clip<float, double, FloatBEFormat>(sdlAudio, audioData, sampleRate, channels))
-            : new(new Clip<float, double, FloatLEFormat>(sdlAudio, audioData, sampleRate, channels)),
+            ? new(new Clip<float, double, FloatBEFormat>(audioData, sampleRate, channels))
+            : new(new Clip<float, double, FloatLEFormat>(audioData, sampleRate, channels)),
         false => IsSigned switch {
             true => SampleSize switch {
-                8 => new(new Clip<sbyte, short, S8Format>(sdlAudio, audioData, sampleRate, channels)),
+                8 => new(new Clip<sbyte, short, S8Format>(audioData, sampleRate, channels)),
                 16 => IsBigEndian
-                    ? new(new Clip<short, int, S16BEFormat>(sdlAudio, audioData, sampleRate, channels))
-                    : new(new Clip<short, int, S16LEFormat>(sdlAudio, audioData, sampleRate, channels)),
+                    ? new(new Clip<short, int, S16BEFormat>(audioData, sampleRate, channels))
+                    : new(new Clip<short, int, S16LEFormat>(audioData, sampleRate, channels)),
                 32 => IsBigEndian
-                    ? new(new Clip<int, long, S32BEFormat>(sdlAudio, audioData, sampleRate, channels))
-                    : new(new Clip<int, long, S32LEFormat>(sdlAudio, audioData, sampleRate, channels)),
+                    ? new(new Clip<int, long, S32BEFormat>(audioData, sampleRate, channels))
+                    : new(new Clip<int, long, S32LEFormat>(audioData, sampleRate, channels)),
                 _ => new($"Unsupported format {this}"),
             },
             false => SampleSize switch {
-                8 => new(new Clip<byte, ushort, U8Format>(sdlAudio, audioData, sampleRate, channels)),
+                8 => new(new Clip<byte, ushort, U8Format>(audioData, sampleRate, channels)),
                 16 => IsBigEndian
-                    ? new(new Clip<ushort, uint, U16BEFormat>(sdlAudio, audioData, sampleRate, channels))
-                    : new(new Clip<ushort, uint, U16LEFormat>(sdlAudio, audioData, sampleRate, channels)),
+                    ? new(new Clip<ushort, uint, U16BEFormat>(audioData, sampleRate, channels))
+                    : new(new Clip<ushort, uint, U16LEFormat>(audioData, sampleRate, channels)),
                 _ => new($"Unsupported format {this}"),
             }
         }

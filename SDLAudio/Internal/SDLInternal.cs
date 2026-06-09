@@ -4,6 +4,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.Marshalling;
+using Device;
 
 /// <summary>
 /// Wraps the raw SDL functions. Should not be used directly.

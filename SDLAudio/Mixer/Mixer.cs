@@ -6,13 +6,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Format;
 
-internal class Mixer<Sample, Accu, Format>
+internal struct Mixer<Sample, Accu, Format>
     where Sample : struct
     where Accu : IAdditionOperators<Accu, Accu, Accu>
     where Format : IAudioFormat<Sample, Accu>
 {
     private static readonly uint monoSampleSize = (uint)Unsafe.SizeOf<Sample>();
-    protected Accu[] buf;
+    private Accu[] buf;
     private readonly bool oppositeEndian;
 
     public Mixer() {
@@ -27,7 +27,7 @@ internal class Mixer<Sample, Accu, Format>
         }
     }
 
-    public void AddChannel(ReadOnlySpan<Sample> audio, float volume) {
+    public readonly void AddChannel(ReadOnlySpan<Sample> audio, float volume) {
         uint i = 0;
 
         if (oppositeEndian) {
@@ -42,7 +42,7 @@ internal class Mixer<Sample, Accu, Format>
         }
     }
 
-    public void Mix(Span<Sample> dst) {
+    public readonly void Mix(Span<Sample> dst) {
         Sample[] mix = new Sample[buf.Length];
 
         for (int i = 0; i < mix.Length; i++) {
@@ -64,27 +64,5 @@ internal class Mixer<Sample, Accu, Format>
         }
 
         buf.AsSpan().Clear();
-    }
-
-    public void Clear(uint bytes) {
-        if (bytes % monoSampleSize != 0) {
-            throw new ArgumentException(
-                $"Bytes must be multiple of {monoSampleSize}",
-                nameof(bytes)
-            );
-        }
-
-        ClearSamples(bytes / monoSampleSize);
-    }
-
-    public void AddChannel(ReadOnlySpan<byte> audio, float volume) {
-        if (audio.Length % monoSampleSize != 0) {
-            throw new ArgumentException(
-                $"Audio length must be multiple of {monoSampleSize}",
-                nameof(audio)
-            );
-        }
-
-        AddChannel(MemoryMarshal.Cast<byte, Sample>(audio), volume);
     }
 }

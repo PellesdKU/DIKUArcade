@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Internal;
 using Sound;
-using Sound.Clip;
 using Result;
 using Mixer;
 using Format;
@@ -26,7 +25,7 @@ internal class Device<Sample, Accu, Format> : IAudioDevice
     private readonly DeviceCallbackProxy proxy;
 #pragma warning restore IDE0052
 
-    private readonly Mixer<Sample, Accu, Format> mixer;
+    private Mixer<Sample, Accu, Format> mixer;
     private float masterVolume = 1;
 
     public uint SampleRate { get; private init; }
@@ -91,31 +90,24 @@ internal class Device<Sample, Accu, Format> : IAudioDevice
         return new(playingSound);
     }
 
-    public Result<IPlayingSound, string> PlaySound(ISound sound, float volume) =>
-        sound switch {
-            Sound<Sample, Accu, Format> native => PlaySound(native, volume)
-                .MapOk(p => p as IPlayingSound),
-            _ => PlaySound(ConvertingSound(sound), volume)
-        };
+    public Result<IPlayingSound, string> PlaySound(ISound sound, float volume = 1f) =>
+        Convert(sound)
+        .AndThen(converted => PlaySound(converted, volume))
+        .MapOk(p => p as IPlayingSound);
 
-    private ISound ConvertingSound(ISound src) =>
+    public Result<ISound, string> Looping(ISound src) =>
+        Convert(src)
+        .MapOk(converted => new Looping<Sample, Accu, Format>(converted, SampleRate, Channels) as ISound);
+
+    private Result<Sound<Sample, Accu, Format>, string> Convert(ISound src) =>
         src switch {
-            Sound<Sample, Accu, Format> native => native,
-            _ => new Converting<Sample, Accu, Format>(sdlAudio, src, SampleRate, Channels)
+            Sound<Sample, Accu, Format> native => new(native),
+            _ => src.Convert<Sample, Accu, Format>(sdlAudio, SampleRate, Channels)
         };
 
-    public Result<IPlayingSound, string> PlayClip(IClip clip, float volume) =>
-        clip.ConvertTo<Sample, Accu, Format>(SampleRate, Channels)
-            .AndThen(clip => PlaySound(clip, volume))
-            .MapOk(playingSound => playingSound as IPlayingSound);
-
-    public Result<IClip, string> ConvertClip(IClip clip) =>
-        clip.ConvertTo<Sample, Accu, Format>(SampleRate, Channels)
-            .MapOk(clip => clip as IClip);
-
-    public Result<ISound, string> Looping(IClip src) =>
-        src.ConvertTo<Sample, Accu, Format>(SampleRate, Channels)
-            .MapOk(clip => new Looping<Sample, Accu, Format>(clip, SampleRate, Channels) as ISound);
+    Result<ISound, string> IAudioDevice.Convert(ISound sound) =>
+        Convert(sound)
+        .MapOk(sound => sound as ISound);
 
     public Device(
         SDLAudio sdlAudio,

@@ -1,12 +1,12 @@
 namespace SDLAudio;
 
 using System;
-using System.Collections.Generic;
-using Device;
-using Sound.Clip;
-using Internal;
-using Result;
 using System.IO;
+using System.Collections.Generic;
+using Result;
+using Internal;
+using Device;
+using Sound;
 
 internal delegate void SDLAudioCallback(IntPtr /* void* */ userdata, IntPtr /* uint8* */ stream, int len);
 
@@ -107,7 +107,7 @@ public class SDLAudio {
     /// </summary>
     /// <param name="stream">Stream of a .wav file.</param>
     /// <returns>A Result of a Sound or a loading error.</returns>
-    public Result<IClip, string> LoadWAV(SDLAudio sdlAudio, Stream stream) {
+    public Result<ISound, string> LoadWAV(SDLAudio sdlAudio, Stream stream) {
         // I can't be bothered to implement an SDL_RWops marshaller, so we just load the whole
         // file into memory and create an RWops* with SDL_RWFromMem().
         byte[] fileData = new byte[stream.Length];
@@ -132,7 +132,7 @@ public class SDLAudio {
 
                 sdlAudio.FreeWAV(wavData);
 
-                return spec.MakeClip(this, soundData);
+                return spec.MakeClip(soundData);
             }
         }
     }
@@ -151,16 +151,16 @@ public class SDLAudio {
         out string name,
         ref SDLAudioSpec spec,
         DeviceType deviceType
-    )  => SDLInternal.GetDefaultAudioInfo(out name, ref spec, deviceType) == 0;
+    ) => SDLInternal.GetDefaultAudioInfo(out name, ref spec, deviceType) == 0;
 
-    internal int GetNumAudioDevices(DeviceType deviceType)
-        => SDLInternal.GetNumAudioDevices(deviceType);
+    internal int GetNumAudioDevices(DeviceType deviceType) =>
+        SDLInternal.GetNumAudioDevices(deviceType);
 
-    internal string GetAudioDeviceName(int index, DeviceType deviceType)
-        => SDLInternal.GetAudioDeviceName(index, deviceType);
+    internal string GetAudioDeviceName(int index, DeviceType deviceType) =>
+        SDLInternal.GetAudioDeviceName(index, deviceType);
 
-    internal bool GetAudioDeviceSpec(int index, DeviceType deviceType, out SDLAudioSpec spec)
-        => SDLInternal.GetAudioDeviceSpec(index, deviceType, out spec) == 0;
+    internal bool GetAudioDeviceSpec(int index, DeviceType deviceType, out SDLAudioSpec spec) =>
+        SDLInternal.GetAudioDeviceSpec(index, deviceType, out spec) == 0;
 
     internal SDLAudioDeviceID OpenAudioDevice(
         string? device,
@@ -176,17 +176,19 @@ public class SDLAudio {
         allowedChanges: allowedChanges
     );
 
-    internal void CloseAudioDevice(SDLAudioDeviceID id)
-        => SDLInternal.CloseAudioDevice(id);
+    internal void CloseAudioDevice(SDLAudioDeviceID id) =>
+        SDLInternal.CloseAudioDevice(id);
 
-    internal void PauseAudioDevice(SDLAudioDeviceID id, bool pause)
-        => SDLInternal.PauseAudioDevice(id, pause);
+    internal void PauseAudioDevice(SDLAudioDeviceID id, bool pause) =>
+        SDLInternal.PauseAudioDevice(id, pause);
 
-    internal SDLAudioStatus GetAudioDeviceStatus(SDLAudioDeviceID id)
-        => SDLInternal.GetAudioDeviceStatus(id);
+    internal SDLAudioStatus GetAudioDeviceStatus(SDLAudioDeviceID id) =>
+        SDLInternal.GetAudioDeviceStatus(id);
 
-    internal void LockAudioDevice(SDLAudioDeviceID id) => SDLInternal.LockAudioDevice(id);
-    internal void UnlockAudioDevice(SDLAudioDeviceID id) => SDLInternal.UnlockAudioDevice(id);
+    internal void LockAudioDevice(SDLAudioDeviceID id) =>
+        SDLInternal.LockAudioDevice(id);
+    internal void UnlockAudioDevice(SDLAudioDeviceID id) =>
+        SDLInternal.UnlockAudioDevice(id);
 
     internal IntPtr LoadWAV_RW(
         IntPtr src,
@@ -196,8 +198,8 @@ public class SDLAudio {
         out uint audioLen
     ) => SDLInternal.LoadWAV_RW(src, freesrc, out spec, out audioBuf, out audioLen);
 
-    internal void FreeWAV(IntPtr audioBuf)
-        => SDLInternal.FreeWAV(audioBuf);
+    internal void FreeWAV(IntPtr audioBuf) =>
+        SDLInternal.FreeWAV(audioBuf);
 
     internal int BuildAudioCVT(
         out SDLAudioCVT cvt,
@@ -217,8 +219,8 @@ public class SDLAudio {
         dstRate
     );
 
-    internal int ConvertAudio(ref SDLAudioCVT cvt)
-        => SDLInternal.ConvertAudio(ref cvt);
+    internal int ConvertAudio(ref SDLAudioCVT cvt) =>
+        SDLInternal.ConvertAudio(ref cvt);
 
     internal Result<byte[], string> Convert(
         ReadOnlySpan<byte> src,

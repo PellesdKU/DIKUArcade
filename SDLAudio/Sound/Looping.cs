@@ -3,7 +3,7 @@ namespace SDLAudio.Sound;
 using System;
 using Format;
 
-public class Looping<Sample, Accu, Format>
+internal class Looping<Sample, Accu, Format>
     : Sound<Sample, Accu, Format>
     where Sample : struct
     where Accu : struct

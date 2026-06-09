@@ -1,4 +1,4 @@
-namespace SDLAudio;
+namespace SDLAudio.Device;
 
 public enum DeviceType : int {
     PLAYBACK = 0,

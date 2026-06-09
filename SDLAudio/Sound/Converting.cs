@@ -4,18 +4,21 @@ using System;
 using System.Runtime.InteropServices;
 using Format;
 
-public class Converting<SampleTo, AccuTo, FormatTo>
+internal class Converting<SampleFrom, AccuFrom, FormatFrom, SampleTo, AccuTo, FormatTo>
     : Sound<SampleTo, AccuTo, FormatTo>
+    where SampleFrom : struct
     where SampleTo : struct
+    where AccuFrom : struct
     where AccuTo : struct
+    where FormatFrom : IAudioFormat<SampleFrom, AccuFrom>
     where FormatTo : IAudioFormat<SampleTo, AccuTo>
 {
     private readonly SDLAudio sdlAudio;
-    private readonly ISound src;
+    private readonly Sound<SampleFrom, AccuFrom, FormatFrom> src;
 
     public Converting(
         SDLAudio sdlAudio,
-        ISound src,
+        Sound<SampleFrom, AccuFrom, FormatFrom> src,
         uint dstRate,
         byte dstChannels
     ) : base(dstRate, dstChannels) {
@@ -31,14 +34,14 @@ public class Converting<SampleTo, AccuTo, FormatTo>
         ulong correctedPlayhead = (ulong)(playhead*correctionFactor);
         uint correctedSamples = (uint)(samples*correctionFactor);
 
-        ReadOnlySpan<byte> srcSamples = src.GetSamples(
+        ReadOnlySpan<SampleFrom> srcSamples = src.GetSamples(
             correctedPlayhead,
             correctedSamples
         );
 
         byte[] converted = sdlAudio.Convert(
-            srcSamples,
-            src.Format,
+            MemoryMarshal.Cast<SampleFrom, byte>(srcSamples),
+            FormatFrom.SDLFormat,
             src.Channels,
             src.SampleRate,
             FormatTo.SDLFormat,
