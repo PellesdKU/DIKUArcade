@@ -1,14 +1,13 @@
 namespace SDLAudio.Sound;
 
+using System.Numerics;
 using Format;
 using Result;
 
+/// <summary>
+/// A sound that can be played on a device.
+/// </summary>
 public interface ISound {
-    uint SampleRate { get; }
-    byte Channels { get; }
-
-    bool IsDone(ulong playhead);
-
     internal Result<Sound<Sample, Accu, Format>, string> Convert<Sample, Accu, Format>(
         SDLAudio sdlAudio,
         uint dstRate,
@@ -16,5 +15,5 @@ public interface ISound {
     )
         where Format : IAudioFormat<Sample, Accu>
         where Sample : struct
-        where Accu : struct;
+        where Accu : struct, IAdditionOperators<Accu, Accu, Accu>;
 }

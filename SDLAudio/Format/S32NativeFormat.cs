@@ -3,6 +3,9 @@ namespace SDLAudio.Format;
 using System;
 using Internal;
 
+/// <summary>
+/// Native endianness signed 32-bit audio format
+/// </summary>
 public struct S32NativeFormat : IAudioFormat<int, long> {
     static SDLAudioFormat IAudioFormat<int, long>.SDLFormat => BitConverter.IsLittleEndian
         ? SDLAudioFormat.S32LE

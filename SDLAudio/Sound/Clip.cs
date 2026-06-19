@@ -6,19 +6,36 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Result;
 using Format;
+using System.Numerics;
 
+/// <summary>
+/// A clip of audio of certain length.
+/// </summary>
+/// <typeparam name="Sample">Audio sample type</typeparam>
+/// <typeparam name="Accu">Accumulator type for mixing</typeparam>
+/// <typeparam name="Format">The audio format of the clip</typeparam>
 internal class Clip<Sample, Accu, Format> : Sound<Sample, Accu, Format>, IEnumerable<Sample>
     where Sample : struct
-    where Accu : struct
+    where Accu : struct, IAdditionOperators<Accu, Accu, Accu>
     where Format : IAudioFormat<Sample, Accu>
 {
     private readonly byte[] rawData;
     private ReadOnlySpan<Sample> Data => MemoryMarshal.Cast<byte, Sample>(rawData);
 
+    /// <summary>
+    /// Length of the clip in samples. This is across all channels, so a stereo clip will have
+    /// twice the Length of a mono clip of the same duration.
+    /// </summary>
     public uint Length => (uint)Data.Length;
 
     public override bool IsDone(ulong playhead) => playhead > Length;
 
+    /// <summary>
+    /// Get a number of samples after some index (playhead). May return fewer samples than requested
+    /// if, for example, the end of the clip has been reached.
+    /// </summary>
+    /// <param name="playhead">The index from which to return samples.</param>
+    /// <param name="samples">The maximum number of samples to return.</param>
     public override ReadOnlySpan<Sample> GetSamples(ulong playhead, uint samples) {
         if ((int)playhead > Data.Length) {
             return new();

@@ -1,15 +1,25 @@
 namespace SDLAudio.Sound;
 
 using System;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Format;
 
+/// <summary>
+/// A decorator which converts samples from a sound of one format to another
+/// </summary>
+/// <typeparam name="SampleFrom">Type of sample to convert from</typeparam>
+/// <typeparam name="AccuFrom">Accumulator type to convert from</typeparam>
+/// <typeparam name="FormatFrom">Format to convert from</typeparam>
+/// <typeparam name="SampleTo">Sample type to convert to</typeparam>
+/// <typeparam name="AccuTo">Accumulator type to convert to</typeparam>
+/// <typeparam name="FormatTo">Format to convert to</typeparam>
 internal class Converting<SampleFrom, AccuFrom, FormatFrom, SampleTo, AccuTo, FormatTo>
     : Sound<SampleTo, AccuTo, FormatTo>
     where SampleFrom : struct
     where SampleTo : struct
-    where AccuFrom : struct
-    where AccuTo : struct
+    where AccuFrom : struct, IAdditionOperators<AccuFrom, AccuFrom, AccuFrom>
+    where AccuTo : struct, IAdditionOperators<AccuTo, AccuTo, AccuTo>
     where FormatFrom : IAudioFormat<SampleFrom, AccuFrom>
     where FormatTo : IAudioFormat<SampleTo, AccuTo>
 {

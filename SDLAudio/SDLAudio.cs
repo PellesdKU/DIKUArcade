@@ -14,7 +14,7 @@ internal delegate void SDLAudioCallback(IntPtr /* void* */ userdata, IntPtr /* u
 
 /// <summary>
 /// This class acts as a guard around SDL Audio, preventing the audio functions from being called
-/// before the audio subsystem is initalized.
+/// before the audio subsystem is initalized, as well as caching the available devices.
 /// </summary>
 public class SDLAudio {
     private readonly Dictionary<string, int> playbackDevices;
@@ -29,6 +29,9 @@ public class SDLAudio {
         SDLInternal.QuitAudio();
     }
 
+    /// <summary>
+    /// Refresh the cache of playback devices
+    /// </summary>
     public void RefreshPlaybackDevices() {
         lock (playbackDevices) {
             playbackDevices.Clear();
@@ -41,8 +44,15 @@ public class SDLAudio {
         }
     }
 
+    /// <summary>
+    /// Get the names of known playback devices.
+    /// </summary>
     public IEnumerable<string> GetPlaybackDevices() => playbackDevices.Keys;
 
+    /// <summary>
+    /// Get the name of the default playback device. Note that this is not necessarily the same
+    /// device as will be opened by OpenDefaultPlaybackDevice().
+    /// </summary>
     public Result<string, string> GetDefaultDevice() {
         SDLAudioSpec spec = default;
         if(!GetDefaultAudioInfo(out string name, ref spec, DeviceType.PLAYBACK)) {
@@ -53,6 +63,13 @@ public class SDLAudio {
         return Result<string, string>.Ok(name);
     }
 
+    /// <summary>
+    /// Open a playback device by name.
+    /// </summary>
+    /// <param name="name">
+    /// Name of the playback device to open. One of the names returned by GetPlaybackDevices().
+    /// </param>
+    /// <returns>An opened audio device, or an error message.</returns>
     public Result<IAudioDevice, string> OpenPlaybackDevice(string name) {
         lock (playbackDevices) {
             if(!playbackDevices.TryGetValue(name, out int index)) {
@@ -82,6 +99,11 @@ public class SDLAudio {
         }
     }
 
+    /// <summary>
+    /// Open the default playback device. Note that this is not necessarily the same device whose
+    /// name is returned by GetDefaultDevice().
+    /// </summary>
+    /// <returns></returns>
     public Result<IAudioDevice, string> OpenDefaultPlaybackDevice() {
         SDLAudioSpec spec = new();
         DeviceCallbackProxy proxy = new();
@@ -137,6 +159,10 @@ public class SDLAudio {
         }
     }
 
+    /// <summary>
+    /// Initialize the SDL Audio subsystem.
+    /// </summary>
+    /// <returns>An SDLAudio on success, or an error message.</returns>
     public static Result<SDLAudio, string> Create() {
         if (SDLInternal.InitAudio()) {
             return new(new SDLAudio());
@@ -145,6 +171,9 @@ public class SDLAudio {
         return new($"Couldn't initialize SDL_Audio: {SDLInternal.GetError()}");
     }
 
+    /// <summary>
+    /// Get the name of the aduio driver that SDL Audio was initialized with.
+    /// </summary>
     public string GetCurrentAudioDriver() => SDLInternal.GetCurrentAudioDriver();
 
     internal bool GetDefaultAudioInfo(

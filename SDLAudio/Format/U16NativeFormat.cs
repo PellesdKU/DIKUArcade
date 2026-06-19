@@ -3,6 +3,9 @@ namespace SDLAudio.Format;
 using System;
 using Internal;
 
+/// <summary>
+/// Native endianness unsigned 16-bit integer audio format
+/// </summary>
 public struct U16NativeFormat : IAudioFormat<ushort, uint> {
     static SDLAudioFormat IAudioFormat<ushort, uint>.SDLFormat => BitConverter.IsLittleEndian
         ? SDLAudioFormat.U16LE

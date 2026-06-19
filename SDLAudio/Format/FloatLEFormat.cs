@@ -2,6 +2,9 @@ namespace SDLAudio.Format;
 
 using Internal;
 
+/// <summary>
+/// Little endian float audio format
+/// </summary>
 public struct FloatLEFormat : IAudioFormat<float, double> {
     static SDLAudioFormat IAudioFormat<float, double>.SDLFormat => SDLAudioFormat.F32LE;
 

@@ -11,6 +11,12 @@ using Mixer;
 using Format;
 using System.Numerics;
 
+/// <summary>
+/// An audio device generic over audio format.
+/// </summary>
+/// <typeparam name="Sample">Sample type of the audio format.</typeparam>
+/// <typeparam name="Accu">Accumulator type of the audio format for mixing.</typeparam>
+/// <typeparam name="Format">Audio format of the device.</typeparam>
 internal class Device<Sample, Accu, Format> : IAudioDevice
     where Sample : struct
     where Accu : struct, IAdditionOperators<Accu, Accu, Accu>

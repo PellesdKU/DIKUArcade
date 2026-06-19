@@ -1,6 +1,7 @@
 namespace SDLAudio.Device;
 
 using System;
+using System.Numerics;
 using Format;
 using Sound;
 
@@ -9,7 +10,7 @@ using Sound;
 /// </summary>
 internal class PlayingSound<Sample, Accu, Format> : IPlayingSound
     where Sample : struct
-    where Accu : struct
+    where Accu : struct, IAdditionOperators<Accu, Accu, Accu>
     where Format : IAudioFormat<Sample, Accu>
 {
     private readonly IAudioDevice device;

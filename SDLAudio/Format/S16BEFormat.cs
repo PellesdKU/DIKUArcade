@@ -2,6 +2,9 @@ namespace SDLAudio.Format;
 
 using Internal;
 
+/// <summary>
+/// Big endian signed 16-bit audio format
+/// </summary>
 public struct S16BEFormat : IAudioFormat<short, int> {
     static SDLAudioFormat IAudioFormat<short, int>.SDLFormat => SDLAudioFormat.S16BE;
 
