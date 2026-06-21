@@ -26,6 +26,8 @@ public class SDLAudio {
     }
 
     ~SDLAudio() {
+        // SDL doesn't actually tear down the audio subsystem before quit has been called
+        // as many times as init was. Think of it as a reference counted object.
         SDLInternal.QuitAudio();
     }
 

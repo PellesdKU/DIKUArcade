@@ -61,11 +61,13 @@ internal class Device<Sample, Accu, Format> : IAudioDevice
                 if (!playingSounds.TryPop(out sound)) { break; }
             }
 
-            ReadOnlySpan<Sample> span = sound.PlaySamples((uint)samples.Length);
+            if (!sound.Paused) {
+                ReadOnlySpan<Sample> span = sound.PlaySamples((uint)samples.Length);
 
-            if (span.Length == 0) { continue; }
+                if (span.Length == 0) { continue; }
 
-            mixer.AddChannel(span, sound.Volume*masterVolume);
+                mixer.AddChannel(span, sound.Volume*masterVolume);
+            }
 
             if (!sound.Done) {
                 continueSounds.Push(sound);

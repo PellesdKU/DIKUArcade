@@ -70,6 +70,24 @@ public readonly struct Result<T, E> {
     };
 
     /// <summary>
+    /// Unwrap or get a default value
+    /// </summary>
+    /// <param name="val">The value to return of the Result is Err</param>
+    public T UnwrapOr(T val) => IsOk switch {
+        true => OkVal,
+        false => val
+    };
+
+    /// <summary>
+    /// Unwrap or return the result of a delegate
+    /// </summary>
+    /// <param name="thunk">The delegate to run to compute the return value if Err</param>
+    public T UnwrapOrElse(Func<T> thunk) => IsOk switch {
+        true => OkVal,
+        false => thunk()
+    };
+
+    /// <summary>
     /// Transform the Result to a Result with a different Ok type by applying the <paramref name="map"/>
     /// to the contained Ok value. Useful for chaining or nesting operations that return Results
     /// with the same Err type.

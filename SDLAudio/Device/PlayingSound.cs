@@ -34,7 +34,7 @@ internal class PlayingSound<Sample, Accu, Format> : IPlayingSound
         device.Unlock();
     }
 
-    public void Pause(bool paused) {
+    public void Pause(bool paused = true) {
         device.Lock();
         Paused = paused;
         device.Unlock();

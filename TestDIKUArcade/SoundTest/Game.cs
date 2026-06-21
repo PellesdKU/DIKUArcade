@@ -6,10 +6,12 @@ using DIKUArcade;
 using DIKUArcade.Audio;
 using DIKUArcade.GUI;
 using DIKUArcade.Input;
+using SDLAudio.Device;
 
 public class Game : DIKUGame {
     private SoundPlayer soundPlayer;
     private readonly AudioManager manager;
+    private IPlayingSound? loopingSound = null;
 
     public Game(WindowArgs windowArgs, AudioManager manager, SoundPlayer soundPlayer) : base(windowArgs) {
         this.soundPlayer = soundPlayer;
@@ -25,11 +27,19 @@ public class Game : DIKUGame {
         );
 
         soundPlayer.PlayLooping("TestDIKUArcade.Assets.block.wav")
-            .DoIfErr(err => Console.WriteLine("Couldn't play sound: {0}", err));
+            .DoOrElse(
+                sound => loopingSound = sound,
+                err => Console.WriteLine("Couldn't play sound: {0}", err)
+            );
     }
 
     public override void KeyHandler(KeyboardAction action, KeyboardKey key) {
         if (action == KeyboardAction.KeyRelease) { return; }
+
+        if (key == KeyboardKey.Space) {
+            loopingSound?.Pause(!loopingSound.Paused);
+            return;
+        }
 
         soundPlayer.PlayClip("TestDIKUArcade.Assets.bounce.wav")
             .DoIfErr(err => Console.WriteLine("Couldn't play sound: {0}", err));
