@@ -5,11 +5,11 @@ using System;
 /// <summary>
 /// A sound that is played repeatedly.
 /// </summary>
-internal class Looping : Sound {
+public class Looping : Sound {
     private readonly Sound inner;
     private ulong offset = 0;
 
-    internal Looping(
+    public Looping(
         Sound inner,
         uint dstRate,
         byte dstChannels

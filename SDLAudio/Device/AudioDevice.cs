@@ -7,12 +7,6 @@ using Sounds;
 using Result;
 using Mixer;
 
-/// <summary>
-/// An audio device generic over audio format.
-/// </summary>
-/// <typeparam name="Sample">Sample type of the audio format.</typeparam>
-/// <typeparam name="Accu">Accumulator type of the audio format for mixing.</typeparam>
-/// <typeparam name="Format">Audio format of the device.</typeparam>
 public class AudioDevice {
     private readonly SDLAudio sdlAudio;
     private readonly SDLAudioDeviceID id;
@@ -49,7 +43,7 @@ public class AudioDevice {
 
                 if (span.Length == 0) { continue; }
 
-                mixer.AddChannel(span, sound.Volume*masterVolume);
+                mixer.AddTrack(span, sound.Volume*masterVolume);
             }
 
             if (!sound.Done) {
@@ -124,6 +118,5 @@ public class AudioDevice {
 
     public void Dispose() {
         sdlAudio.CloseAudioDevice(id);
-        GC.SuppressFinalize(this);
     }
 }

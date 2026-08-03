@@ -3,7 +3,7 @@ namespace SDLAudio.Mixer;
 using System;
 
 /// <summary>
-/// A stateful sound mixer.
+/// A stateful sound mixer for native float format.
 /// </summary>
 internal struct Mixer {
     private double[] buf;
@@ -13,12 +13,12 @@ internal struct Mixer {
     }
 
     /// <summary>
-    /// Add a new channel to the mix. Note that ClearSamples() must have been called with a length
+    /// Add a new track to the mix. Note that ClearSamples() must have been called with a length
     /// greater than or equal to the Length of <paramref name="audio" />.
     /// </summary>
     /// <param name="audio">Audio data to mix in.</param>
     /// <param name="volume">Volume to adjust audio with.</param>
-    public readonly void AddChannel(ReadOnlySpan<float> audio, float volume) {
+    public readonly void AddTrack(ReadOnlySpan<float> audio, float volume) {
         uint i = 0;
         foreach (float sample in audio) {
             buf[i] += sample * volume;
@@ -27,7 +27,7 @@ internal struct Mixer {
     }
 
     /// <summary>
-    /// Write the mixed audio to a span, clamping the mixed audio to the range of the format.
+    /// Write the mixed audio to a span, clamping the mixed audio to the float range.
     /// Note that ClearSamples() must have been called with a length greater than or equal to
     /// the Length of <paramref name="dst" />.
     /// </summary>

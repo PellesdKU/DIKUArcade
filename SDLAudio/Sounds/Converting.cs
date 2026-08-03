@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using Internal;
 
 /// <summary>
-/// A decorator which converts samples from a sound of one format to another
+/// A decorator which converts samples from a sound of one format to another.
 /// </summary>
 internal class Converting : Sound {
     private readonly SDLAudio sdlAudio;

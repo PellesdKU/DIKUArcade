@@ -33,7 +33,7 @@ public class SDLAudio {
     }
 
     /// <summary>
-    /// Refresh the cache of playback devices
+    /// Refresh the cache of playback devices.
     /// </summary>
     public void RefreshPlaybackDevices() {
         lock (playbackDevices) {
@@ -185,7 +185,7 @@ public class SDLAudio {
     }
 
     /// <summary>
-    /// Get the name of the aduio driver that SDL Audio was initialized with.
+    /// Get the name of the audio driver that SDL Audio was initialized with.
     /// </summary>
     public string GetCurrentAudioDriver() => SDLInternal.GetCurrentAudioDriver();
 

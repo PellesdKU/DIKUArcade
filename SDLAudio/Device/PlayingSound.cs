@@ -4,7 +4,7 @@ using System;
 using Sounds;
 
 /// <summary>
-/// A helper class representing a sound that is being played.
+/// A stateful helper class representing a sound that is being played, tracking progress and volume.
 /// </summary>
 public class PlayingSound {
     private readonly AudioDevice device;
