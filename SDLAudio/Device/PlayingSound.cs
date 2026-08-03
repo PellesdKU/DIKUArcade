@@ -1,20 +1,14 @@
 namespace SDLAudio.Device;
 
 using System;
-using System.Numerics;
-using Format;
-using Sound;
+using Sounds;
 
 /// <summary>
 /// A helper class representing a sound that is being played.
 /// </summary>
-internal class PlayingSound<Sample, Accu, Format> : IPlayingSound
-    where Sample : struct
-    where Accu : struct, IAdditionOperators<Accu, Accu, Accu>
-    where Format : IAudioFormat<Sample, Accu>
-{
-    private readonly IAudioDevice device;
-    private readonly Sound<Sample, Accu, Format> sound;
+public class PlayingSound {
+    private readonly AudioDevice device;
+    private readonly Sound sound;
     private ulong playhead;
     private bool canceled;
 
@@ -22,8 +16,8 @@ internal class PlayingSound<Sample, Accu, Format> : IPlayingSound
     public float Volume { get; private set; }
     public bool Done => canceled || sound.IsDone(playhead);
 
-    public ReadOnlySpan<Sample> PlaySamples(uint samples) {
-        ReadOnlySpan<Sample> span = sound.GetSamples(playhead, samples);
+    public ReadOnlySpan<float> PlaySamples(uint samples) {
+        ReadOnlySpan<float> span = sound.GetSamples(playhead, samples);
         playhead += samples;
         return span;
     }
@@ -45,8 +39,8 @@ internal class PlayingSound<Sample, Accu, Format> : IPlayingSound
     }
 
     public PlayingSound(
-        IAudioDevice device,
-        Sound<Sample, Accu, Format> sound,
+        AudioDevice device,
+        Sound sound,
         float volume,
         bool paused
     ) {

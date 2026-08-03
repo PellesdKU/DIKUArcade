@@ -1,12 +1,11 @@
 namespace DIKUArcade.Audio;
 
 using System;
-using SDLAudio.Format;
-using SDLAudio.Sound;
+using SDLAudio.Sounds;
 
 public delegate float SoundGenerator(float time);
 
-public class ProceduralSound : Sound<float, double, FloatNativeFormat> {
+public class ProceduralSound : Sound {
     private readonly SoundGenerator gen;
     private readonly Func<float, bool> isDone;
 

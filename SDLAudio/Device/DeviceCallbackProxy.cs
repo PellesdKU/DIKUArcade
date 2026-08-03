@@ -2,7 +2,7 @@ namespace SDLAudio.Device;
 
 using System;
 
-internal delegate void DeviceCallback(Span<byte> stream);
+internal delegate void DeviceCallback(Span<float> stream);
 
 // We need to give SDL the callback when opening the device,
 // but the Device object has not been constructed at that
@@ -21,7 +21,7 @@ internal class DeviceCallbackProxy {
     private void Listen(IntPtr _, IntPtr stream, int len) {
         if (Callback is DeviceCallback cb) {
             unsafe {
-                Span<byte> span = new((void*)stream, len);
+                Span<float> span = new((void*)stream, len/sizeof(float));
                 cb(span);
             }
         }

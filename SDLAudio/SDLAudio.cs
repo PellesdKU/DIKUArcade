@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using Result;
 using Internal;
 using Device;
-using Sound;
+using Sounds;
+using System.Runtime.InteropServices;
 
 internal delegate void SDLAudioCallback(IntPtr /* void* */ userdata, IntPtr /* uint8* */ stream, int len);
 
@@ -72,7 +73,7 @@ public class SDLAudio {
     /// Name of the playback device to open. One of the names returned by GetPlaybackDevices().
     /// </param>
     /// <returns>An opened audio device, or an error message.</returns>
-    public Result<IAudioDevice, string> OpenPlaybackDevice(string name) {
+    public Result<AudioDevice, string> OpenPlaybackDevice(string name) {
         lock (playbackDevices) {
             if(!playbackDevices.TryGetValue(name, out int index)) {
                 return new($"Unknown device: {name}");
@@ -84,6 +85,7 @@ public class SDLAudio {
 
             DeviceCallbackProxy proxy = new();
             spec.Callback = proxy.Listener;
+            spec.Format = SDLAudioFormat.F32Native;
 
             SDLAudioDeviceID id = OpenAudioDevice(
                 device:         name,
@@ -97,7 +99,7 @@ public class SDLAudio {
                 return new($"Couldn't open audio device: {SDLInternal.GetError()}");
             }
 
-            return obtainedSpec.MakeDevice(this, id, proxy);
+            return new(obtainedSpec.MakeDevice(this, id, proxy));
         }
     }
 
@@ -106,10 +108,11 @@ public class SDLAudio {
     /// name is returned by GetDefaultDevice().
     /// </summary>
     /// <returns></returns>
-    public Result<IAudioDevice, string> OpenDefaultPlaybackDevice() {
+    public Result<AudioDevice, string> OpenDefaultPlaybackDevice() {
         SDLAudioSpec spec = new();
         DeviceCallbackProxy proxy = new();
         spec.Callback = proxy.Listener;
+        spec.Format = SDLAudioFormat.F32Native;
 
         SDLAudioDeviceID id = OpenAudioDevice(
             device:         null,
@@ -123,7 +126,7 @@ public class SDLAudio {
             return new($"Couldn't open audio device: {SDLInternal.GetError()}");
         }
 
-        return obtainedSpec.MakeDevice(this, id, proxy);
+        return new(obtainedSpec.MakeDevice(this, id, proxy));
     }
 
     /// <summary>
@@ -131,7 +134,7 @@ public class SDLAudio {
     /// </summary>
     /// <param name="stream">Stream of a .wav file.</param>
     /// <returns>A Result of a Sound or a loading error.</returns>
-    public Result<ISound, string> LoadWAV(SDLAudio sdlAudio, Stream stream) {
+    public Result<Sound, string> LoadWAV(SDLAudio sdlAudio, Stream stream) {
         // I can't be bothered to implement an SDL_RWops marshaller, so we just load the whole
         // file into memory and create an RWops* with SDL_RWFromMem().
         byte[] fileData = new byte[stream.Length];
@@ -150,13 +153,21 @@ public class SDLAudio {
                 }
 
                 byte[] soundData = new byte[len];
-                unsafe {
-                    new ReadOnlySpan<byte>((void*)wavData, (int)len).CopyTo(soundData);
-                }
+                new ReadOnlySpan<byte>((void*)wavData, (int)len).CopyTo(soundData);
 
                 sdlAudio.FreeWAV(wavData);
 
-                return spec.MakeClip(soundData);
+                return sdlAudio.Convert(
+                    soundData,
+                    spec.Format,
+                    spec.Channels,
+                    (uint)spec.Freq,
+                    SDLAudioFormat.F32Native,
+                    spec.Channels,
+                    (uint)spec.Freq
+                ).MapOk(newData => spec.MakeClip(
+                    MemoryMarshal.Cast<byte, float>(newData).ToArray()
+                ) as Sound);
             }
         }
     }

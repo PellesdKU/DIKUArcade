@@ -2,14 +2,10 @@ namespace SDLAudio.Device;
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Internal;
-using Sound;
+using Sounds;
 using Result;
 using Mixer;
-using Format;
-using System.Numerics;
 
 /// <summary>
 /// An audio device generic over audio format.
@@ -17,12 +13,7 @@ using System.Numerics;
 /// <typeparam name="Sample">Sample type of the audio format.</typeparam>
 /// <typeparam name="Accu">Accumulator type of the audio format for mixing.</typeparam>
 /// <typeparam name="Format">Audio format of the device.</typeparam>
-internal class Device<Sample, Accu, Format> : IAudioDevice
-    where Sample : struct
-    where Accu : struct, IAdditionOperators<Accu, Accu, Accu>
-    where Format : IAudioFormat<Sample, Accu>
-{
-    private static readonly uint monoSampleSize = (uint)Unsafe.SizeOf<Sample>();
+public class AudioDevice {
     private readonly SDLAudio sdlAudio;
     private readonly SDLAudioDeviceID id;
 
@@ -31,38 +22,30 @@ internal class Device<Sample, Accu, Format> : IAudioDevice
     private readonly DeviceCallbackProxy proxy;
 #pragma warning restore IDE0052
 
-    private Mixer<Sample, Accu, Format> mixer;
+    private Mixer mixer;
     private float masterVolume = 1;
 
     public uint SampleRate { get; private init; }
     public byte Channels { get; private init; }
 
-    private readonly Stack<PlayingSound<Sample, Accu, Format>> playingSounds;
+    private readonly Stack<PlayingSound> playingSounds;
 
     public bool Stopped => sdlAudio.GetAudioDeviceStatus(id) == SDLAudioStatus.STOPPED;
     public bool Paused => sdlAudio.GetAudioDeviceStatus(id) == SDLAudioStatus.PAUSED;
 
-    private void Callback(Span<byte> stream) {
-        if (stream.Length % monoSampleSize != 0) {
-            throw new ArgumentException(
-                $"Stream length must be a multiple of {monoSampleSize}",
-                nameof(stream)
-            );
-        }
+    private void Callback(Span<float> stream) {
+        mixer.ClearSamples((uint)stream.Length);
 
-        Span<Sample> samples = MemoryMarshal.Cast<byte, Sample>(stream);
-        mixer.ClearSamples((uint)samples.Length);
+        Stack<PlayingSound> continueSounds = new();
 
-        Stack<PlayingSound<Sample, Accu, Format>> continueSounds = new();
-
-        PlayingSound<Sample, Accu, Format>? sound;
+        PlayingSound? sound;
         while (true) {
             lock(playingSounds) {
                 if (!playingSounds.TryPop(out sound)) { break; }
             }
 
             if (!sound.Paused) {
-                ReadOnlySpan<Sample> span = sound.PlaySamples((uint)samples.Length);
+                ReadOnlySpan<float> span = sound.PlaySamples((uint)stream.Length);
 
                 if (span.Length == 0) { continue; }
 
@@ -74,22 +57,22 @@ internal class Device<Sample, Accu, Format> : IAudioDevice
             }
         }
 
-        mixer.Mix(samples);
+        mixer.Mix(stream);
 
         lock(playingSounds) {
-            foreach (PlayingSound<Sample, Accu, Format> continueSound in continueSounds) {
+            foreach (PlayingSound continueSound in continueSounds) {
                 playingSounds.Push(continueSound);
             }
         }
     }
 
-    public Result<PlayingSound<Sample, Accu, Format>, string> PlaySound(
-        Sound<Sample, Accu, Format> sound,
+    private Result<PlayingSound, string> PlaySoundNative(
+        Sound sound,
         float volume = 1f
     ) {
         if (Stopped) { return new("Device stopped."); }
 
-        PlayingSound<Sample, Accu, Format> playingSound = new(this, sound, volume, false);
+        PlayingSound playingSound = new(this, sound, volume, false);
 
         lock(playingSounds) {
             playingSounds.Push(playingSound);
@@ -98,26 +81,18 @@ internal class Device<Sample, Accu, Format> : IAudioDevice
         return new(playingSound);
     }
 
-    public Result<IPlayingSound, string> PlaySound(ISound sound, float volume = 1f) =>
+    public Result<PlayingSound, string> PlaySound(Sound sound, float volume = 1f) =>
         Convert(sound)
-        .AndThen(converted => PlaySound(converted, volume))
-        .MapOk(p => p as IPlayingSound);
+        .AndThen(converted => PlaySoundNative(converted, volume));
 
-    public Result<ISound, string> Looping(ISound src) =>
+    public Result<Sound, string> Looping(Sound src) =>
         Convert(src)
-        .MapOk(converted => new Looping<Sample, Accu, Format>(converted, SampleRate, Channels) as ISound);
+        .MapOk(converted => new Looping(converted, SampleRate, Channels) as Sound);
 
-    private Result<Sound<Sample, Accu, Format>, string> Convert(ISound src) =>
-        src switch {
-            Sound<Sample, Accu, Format> native => new(native),
-            _ => src.Convert<Sample, Accu, Format>(sdlAudio, SampleRate, Channels)
-        };
+    public Result<Sound, string> Convert(Sound src) =>
+        src.Convert(sdlAudio, SampleRate, Channels);
 
-    Result<ISound, string> IAudioDevice.Convert(ISound sound) =>
-        Convert(sound)
-        .MapOk(sound => sound as ISound);
-
-    public Device(
+    internal AudioDevice(
         SDLAudio sdlAudio,
         SDLAudioDeviceID deviceId,
         DeviceCallbackProxy proxy,

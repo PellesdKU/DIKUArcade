@@ -1,36 +1,15 @@
 namespace SDLAudio.Mixer;
 
 using System;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Format;
 
 /// <summary>
-/// A stateful sound mixer generic over audio format.
+/// A stateful sound mixer.
 /// </summary>
-/// <typeparam name="Sample">Sample type of the audio to mix.</typeparam>
-/// <typeparam name="Accu">Accumulator type for temporary storage.</typeparam>
-/// <typeparam name="Format">Format of audio to mix.</typeparam>
-internal struct Mixer<Sample, Accu, Format>
-    where Sample : struct
-    where Accu : struct, IAdditionOperators<Accu, Accu, Accu>
-    where Format : IAudioFormat<Sample, Accu>
-{
-    private static readonly uint monoSampleSize = (uint)Unsafe.SizeOf<Sample>();
-    private Accu[] buf;
-    private readonly bool oppositeEndian;
+internal struct Mixer {
+    private double[] buf;
 
     public Mixer() {
-        oppositeEndian = Format.SDLFormat.IsOppositeEndian;
-        buf = Array.Empty<Accu>();
-    }
-
-    private static void ReverseEndianness(Span<Sample> samples) {
-        Span<byte> byteSpan = MemoryMarshal.Cast<Sample, byte>(samples);
-        for (uint i = 0; i < samples.Length; i++) {
-            byteSpan.Slice((int)(i*monoSampleSize), (int)monoSampleSize).Reverse();
-        }
+        buf = Array.Empty<double>();
     }
 
     /// <summary>
@@ -39,16 +18,10 @@ internal struct Mixer<Sample, Accu, Format>
     /// </summary>
     /// <param name="audio">Audio data to mix in.</param>
     /// <param name="volume">Volume to adjust audio with.</param>
-    public readonly void AddChannel(ReadOnlySpan<Sample> audio, float volume) {
-        if (oppositeEndian) {
-            Sample[] temp = audio.ToArray();
-            ReverseEndianness(temp);
-            audio = temp.AsSpan();
-        }
-
+    public readonly void AddChannel(ReadOnlySpan<float> audio, float volume) {
         uint i = 0;
-        foreach (Sample sample in audio) {
-            buf[i] += Format.VolumeAdjust(sample, volume);
+        foreach (float sample in audio) {
+            buf[i] += sample * volume;
             i++;
         }
     }
@@ -59,20 +32,14 @@ internal struct Mixer<Sample, Accu, Format>
     /// the Length of <paramref name="dst" />.
     /// </summary>
     /// <param name="dst">Destination span to write to.</param>
-    public readonly void Mix(Span<Sample> dst) {
-        Sample[] mix = new Sample[buf.Length];
+    public readonly void Mix(Span<float> dst) {
+        float[] mix = new float[buf.Length];
 
         for (int i = 0; i < mix.Length; i++) {
-            mix[i] = Format.Clamp(buf[i]);
+            mix[i] = (float)double.Clamp(buf[i], float.MinValue, float.MaxValue);
         }
 
-        Span<Sample> mixSpan = mix.AsSpan();
-
-        if (oppositeEndian) {
-            ReverseEndianness(mixSpan);
-        }
-
-        mixSpan.CopyTo(dst);
+        mix.AsSpan().CopyTo(dst);
     }
 
     /// <summary>
@@ -81,7 +48,7 @@ internal struct Mixer<Sample, Accu, Format>
     /// <param name="length">Length to expand the buffer to.</param>
     public void ClearSamples(uint length) {
         if (buf.Length < length) {
-            buf = new Accu[length];
+            buf = new double[length];
         }
 
         buf.AsSpan().Clear();

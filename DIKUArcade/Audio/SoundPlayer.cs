@@ -7,7 +7,7 @@ using System.Reflection;
 using Result;
 using SDLAudio;
 using SDLAudio.Device;
-using SDLAudio.Sound;
+using SDLAudio.Sounds;
 
 /// <summary>
 /// Class representing an open audio device on which sound can be played. Audio clips can be played
@@ -18,7 +18,7 @@ using SDLAudio.Sound;
 /// </summary>
 public class SoundPlayer : IDisposable {
     private readonly SDLAudio sdlAudio;
-    private readonly IAudioDevice device;
+    private readonly AudioDevice device;
 
     /// <summary>
     /// Determine whether the sound player is still valid. This may not be the case if for example
@@ -27,9 +27,9 @@ public class SoundPlayer : IDisposable {
     /// </summary>
     public bool Invalid => device.Stopped;
 
-    private readonly Dictionary<string, ISound> clips;
+    private readonly Dictionary<string, Sound> clips;
 
-    internal SoundPlayer(SDLAudio sdlAudio, IAudioDevice device) {
+    internal SoundPlayer(SDLAudio sdlAudio, AudioDevice device) {
         clips = new();
         this.sdlAudio = sdlAudio;
         this.device = device;
@@ -41,7 +41,7 @@ public class SoundPlayer : IDisposable {
     /// <param name="generator">Function from the time to the generated sample.</param>
     /// <param name="isDone">Function from time to a bool indicating whether the sound is done.</param>
     /// <returns>An IPlayingSound representing the procedurally generated sound.</returns>
-    public IPlayingSound PlayProcedural(
+    public PlayingSound PlayProcedural(
         SoundGenerator generator,
         Func<float, bool> isDone
     ) => device.PlaySound(new ProceduralSound(generator, isDone, device.SampleRate, 1))
@@ -55,7 +55,7 @@ public class SoundPlayer : IDisposable {
     /// <param name="manifestResourceName">Manifest resource name of the sound clip to play.</param>
     /// <param name="volume">Volume to play the clip at (defaults to 1)</param>
     /// <returns>An IPlayingSound representing the clip.</returns>
-    public Result<IPlayingSound, string> PlayLooping(
+    public Result<PlayingSound, string> PlayLooping(
         string manifestResourceName,
         float volume = 1f
     ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
@@ -68,14 +68,14 @@ public class SoundPlayer : IDisposable {
     /// <param name="manifestResourceName"></param>
     /// <param name="volume"></param>
     /// <returns></returns>
-    public Result<IPlayingSound, string> PlayClip(
+    public Result<PlayingSound, string> PlayClip(
         string manifestResourceName,
         float volume = 1f
     ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
         .AndThen(sound => device.PlaySound(sound, volume));
 
-    private Result<ISound, string> GetClip(string manifestResourceName, Assembly assembly) {
-        if (clips.TryGetValue(manifestResourceName, out ISound? value)) {
+    private Result<Sound, string> GetClip(string manifestResourceName, Assembly assembly) {
+        if (clips.TryGetValue(manifestResourceName, out Sound? value)) {
             return new(value);
         }
 

@@ -11,7 +11,7 @@ using SDLAudio.Device;
 public class Game : DIKUGame {
     private SoundPlayer soundPlayer;
     private readonly AudioManager manager;
-    private IPlayingSound? loopingSound = null;
+    private PlayingSound? loopingSound = null;
 
     public Game(WindowArgs windowArgs, AudioManager manager, SoundPlayer soundPlayer) : base(windowArgs) {
         this.soundPlayer = soundPlayer;

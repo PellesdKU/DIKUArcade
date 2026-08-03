@@ -1,9 +1,8 @@
 namespace SDLAudio.Internal;
 
 using System.Text;
-using Result;
 using Device;
-using Sound;
+using Sounds;
 
 /// <summary>
 /// An SDL_AudioSpec <see href="https://wiki.libsdl.org/SDL2/SDL_AudioSpec"/>
@@ -19,14 +18,14 @@ internal struct SDLAudioSpec {
 #pragma warning restore CS0649
     internal SDLAudioCallback? Callback;
 
-    public readonly Result<ISound, string> MakeClip(byte[] audioData) =>
-        Format.MakeClip(audioData, (uint)Freq, Channels);
+    public readonly Clip MakeClip(float[] audioData) =>
+        new(audioData, (uint)Freq, Channels);
 
-    public readonly Result<IAudioDevice, string> MakeDevice(
+    public readonly AudioDevice MakeDevice(
         SDLAudio audio,
         SDLAudioDeviceID id,
         DeviceCallbackProxy proxy
-    ) => Format.MakeDevice(audio, id, proxy, (uint)Freq, Channels);
+    ) => new(audio, id, proxy, (uint)Freq, Channels);
 
     public override readonly string ToString() => new StringBuilder()
         .Append(Format.ToString()).Append(' ')
