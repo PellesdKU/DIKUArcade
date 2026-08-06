@@ -17,7 +17,6 @@ public class LinearFadeEffect : IAudioEffect {
                 startVolume,
                 endVolume
             );
-            Console.WriteLine(volume);
             samples[(int)i] *= volume;
         }
     }
