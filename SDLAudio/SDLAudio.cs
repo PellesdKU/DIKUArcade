@@ -132,9 +132,13 @@ public class SDLAudio {
     /// <summary>
     /// Load a sound from a stream of a .wav file.
     /// </summary>
-    /// <param name="stream">Stream of a .wav file.</param>
     /// <returns>A Result of a Sound or a loading error.</returns>
-    public Result<Sound, string> LoadWAV(SDLAudio sdlAudio, Stream stream) {
+    public Result<Clip, string> LoadWAV(
+        SDLAudio sdlAudio,
+        Stream stream,
+        uint sampleRate,
+        byte channels
+    ) {
         // I can't be bothered to implement an SDL_RWops marshaller, so we just load the whole
         // file into memory and create an RWops* with SDL_RWFromMem().
         byte[] fileData = new byte[stream.Length];
@@ -163,11 +167,13 @@ public class SDLAudio {
                     spec.Channels,
                     (uint)spec.Freq,
                     SDLAudioFormat.F32Native,
-                    spec.Channels,
-                    (uint)spec.Freq
-                ).MapOk(newData => spec.MakeClip(
-                    MemoryMarshal.Cast<byte, float>(newData).ToArray()
-                ) as Sound);
+                    channels,
+                    sampleRate
+                ).MapOk(newData => new Clip(
+                    MemoryMarshal.Cast<byte, float>(newData).ToArray(),
+                    sampleRate,
+                    channels
+                ));
             }
         }
     }

@@ -1,17 +1,16 @@
 namespace SDLAudio.Sounds;
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Result;
-using Internal;
 
 /// <summary>
-/// A clip of audio of certain length.
+/// A clip of audio.
 /// </summary>
-public class Clip : Sound, IEnumerable<float> {
-    private readonly float[] data;
+public class Clip : ISound {
+    private readonly float[][] data;
+
+    public byte Channels { get; private init; }
+    public uint SampleRate { get; private init; }
+    public uint Samples { get; private init; }
 
     /// <summary>
     /// Length of the clip in samples. This is across all channels, so a stereo clip will have
@@ -19,7 +18,7 @@ public class Clip : Sound, IEnumerable<float> {
     /// </summary>
     public uint Length => (uint)data.Length;
 
-    public override bool IsDone(ulong playhead) => playhead > Length;
+    public bool IsDone(ulong playhead, uint _) => playhead > Samples;
 
     /// <summary>
     /// Get a number of samples after some index (playhead). May return fewer samples than requested
@@ -27,70 +26,39 @@ public class Clip : Sound, IEnumerable<float> {
     /// </summary>
     /// <param name="playhead">The index from which to return samples.</param>
     /// <param name="samples">The maximum number of samples to return.</param>
-    public override ReadOnlySpan<float> GetSamples(ulong playhead, uint samples) {
-        if ((int)playhead > data.Length) {
+    public ReadOnlySpan<float> GetSamples(
+        ulong playhead,
+        uint samples,
+        uint sampleRate,
+        byte channel
+    ) {
+        if ((int)playhead > Samples) {
             return new();
         }
 
-        int index = int.Min((int)playhead, data.Length);
-        int remaining = (int)Length - index;
+        int index = int.Min((int)playhead, (int)Samples);
+        int remaining = (int)Samples - index;
         int len = int.Min(remaining, (int)samples);
 
-        return data.AsSpan().Slice(index, len);
+        return data[channel].AsSpan().Slice(index, len);
     }
-
-    public override Result<Sound, string> Convert(
-        SDLAudio sdlAudio, uint dstRate, byte dstChannels
-    ) => sdlAudio.Convert(
-        MemoryMarshal.Cast<float, byte>(data),
-        SDLAudioFormat.F32Native,
-        Channels,
-        SampleRate,
-        SDLAudioFormat.F32Native,
-        dstChannels,
-        dstRate
-    ).MapOk(newData => new Clip(
-        MemoryMarshal.Cast<byte, float>(newData).ToArray(),
-        dstRate,
-        dstChannels
-    ) as Sound);
 
     public Clip(
         float[] audioData,
         uint sampleRate,
         byte channels
-    ) : base(sampleRate, channels) {
-        data = audioData;
-    }
+    ) {
+        SampleRate = sampleRate;
+        Channels = channels;
+        Samples = (uint)audioData.Length/channels;
 
-    public IEnumerator<float> GetEnumerator() => new AudioEnumerator(this);
+        data = new float[Channels][];
 
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-    public class AudioEnumerator : IEnumerator<float> {
-        private readonly Clip audio;
-        private int index = -1;
-
-        public AudioEnumerator(Clip audio) {
-            this.audio = audio;
-        }
-
-        public float Current => audio.data[index];
-
-        object IEnumerator.Current => Current;
-
-        public void Dispose() {
-            GC.SuppressFinalize(this);
-        }
-
-        public bool MoveNext() {
-            index++;
-
-            return index < audio.Length;
-        }
-
-        public void Reset() {
-            index = -1;
+        for (byte c = 0; c < Channels; c++) {
+            data[c] = new float[Samples];
+            for (int s = 0; s < Samples; s++) {
+                data[c][s] = audioData[c+s*Channels];
+            }
         }
     }
 }

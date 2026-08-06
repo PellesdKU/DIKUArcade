@@ -27,7 +27,7 @@ public class SoundPlayer : IDisposable {
     /// </summary>
     public bool Invalid => device.Stopped;
 
-    private readonly Dictionary<string, Sound> clips;
+    private readonly Dictionary<string, Clip> clips;
 
     internal SoundPlayer(SDLAudio sdlAudio, AudioDevice device) {
         clips = new();
@@ -41,26 +41,11 @@ public class SoundPlayer : IDisposable {
     /// <param name="generator">Function from the time to the generated sample.</param>
     /// <param name="isDone">Function from time to a bool indicating whether the sound is done.</param>
     /// <returns>An IPlayingSound representing the procedurally generated sound.</returns>
-    public PlayingSound PlayProcedural(
-        SoundGenerator generator,
-        Func<float, bool> isDone
-    ) => device.PlaySound(new ProceduralSound(generator, isDone, device.SampleRate, 1))
-        // A procedural sound is converted with a ConvertingSound, creation of which cannot fail.
-        // Thus, it should be safe to unwrap here.
-        .Unwrap();
-
-    /// <summary>
-    /// Play a looping clip.
-    /// </summary>
-    /// <param name="manifestResourceName">Manifest resource name of the sound clip to play.</param>
-    /// <param name="volume">Volume to play the clip at (defaults to 1)</param>
-    /// <returns>An IPlayingSound representing the clip.</returns>
-    public Result<PlayingSound, string> PlayLooping(
-        string manifestResourceName,
+    public Result<PlayingSound, string> PlaySound(
+        ISound sound,
+        SoundEventHandler onDone,
         float volume = 1f
-    ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
-        .AndThen(device.Looping)
-        .AndThen(looping => device.PlaySound(looping, volume));
+    ) => device.PlaySound(sound, onDone, volume);
 
     /// <summary>
     /// Play a clip
@@ -70,12 +55,16 @@ public class SoundPlayer : IDisposable {
     /// <returns></returns>
     public Result<PlayingSound, string> PlayClip(
         string manifestResourceName,
+        SoundEventHandler onDone,
         float volume = 1f
     ) => GetClip(manifestResourceName, Assembly.GetCallingAssembly())
-        .AndThen(sound => device.PlaySound(sound, volume));
+        .AndThen(sound => device.PlaySound(sound, onDone, volume));
 
-    private Result<Sound, string> GetClip(string manifestResourceName, Assembly assembly) {
-        if (clips.TryGetValue(manifestResourceName, out Sound? value)) {
+    public Result<Clip, string> GetClip(string manifestResourceName) =>
+        GetClip(manifestResourceName, Assembly.GetCallingAssembly());
+
+    private Result<Clip, string> GetClip(string manifestResourceName, Assembly assembly) {
+        if (clips.TryGetValue(manifestResourceName, out Clip? value)) {
             return new(value);
         }
 
@@ -84,8 +73,7 @@ public class SoundPlayer : IDisposable {
             ?? throw new Exception($"{manifestResourceName} not found. " +
                                     "Make sure that the file is being embedded");
 
-            return sdlAudio.LoadWAV(sdlAudio, stream)
-                .AndThen(device.Convert)
+            return sdlAudio.LoadWAV(sdlAudio, stream, device.SampleRate, device.Channels)
                 .DoIfOk(sound => clips[manifestResourceName] = sound);
         } catch (Exception err) {
             return new(err.ToString());

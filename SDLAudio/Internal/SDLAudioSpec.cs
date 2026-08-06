@@ -25,7 +25,7 @@ internal struct SDLAudioSpec {
         SDLAudio audio,
         SDLAudioDeviceID id,
         DeviceCallbackProxy proxy
-    ) => new(audio, id, proxy, (uint)Freq, Channels);
+    ) => new(audio, id, proxy, (uint)Freq, Channels, Samples);
 
     public override readonly string ToString() => new StringBuilder()
         .Append(Format.ToString()).Append(' ')

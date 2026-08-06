@@ -5,11 +5,11 @@ using System;
 /// <summary>
 /// A stateful sound mixer for native float format.
 /// </summary>
-internal struct Mixer {
-    private double[] buf;
+internal readonly struct Mixer {
+    private readonly double[,] buf;
 
-    public Mixer() {
-        buf = Array.Empty<double>();
+    public Mixer(byte channels, ushort samples) {
+        buf = new double[channels,samples];
     }
 
     /// <summary>
@@ -18,10 +18,12 @@ internal struct Mixer {
     /// </summary>
     /// <param name="audio">Audio data to mix in.</param>
     /// <param name="volume">Volume to adjust audio with.</param>
-    public readonly void AddTrack(ReadOnlySpan<float> audio, float volume) {
+    public readonly void AddTrack(ReadOnlySpan<float> audio, byte channel, float volume) {
+        if (channel > buf.GetLength(0)) { return; }
+
         uint i = 0;
         foreach (float sample in audio) {
-            buf[i] += sample * volume;
+            buf[channel, i] += sample * volume;
             i++;
         }
     }
@@ -33,24 +35,19 @@ internal struct Mixer {
     /// </summary>
     /// <param name="dst">Destination span to write to.</param>
     public readonly void Mix(Span<float> dst) {
-        float[] mix = new float[buf.Length];
+        if (dst.Length < buf.Length) { return; }
 
-        for (int i = 0; i < mix.Length; i++) {
-            mix[i] = (float)double.Clamp(buf[i], float.MinValue, float.MaxValue);
+        byte channels = (byte)buf.GetLength(0);
+        int samples   = buf.GetLength(1);
+
+        for (byte c = 0; c < channels; c++) {
+            for (int i = 0; i < samples; i++) {
+                dst[c+i*channels] = (float)double.Clamp(buf[c,i], float.MinValue, float.MaxValue);
+            }
         }
-
-        mix.AsSpan().CopyTo(dst);
     }
 
-    /// <summary>
-    /// Clear the mix buffer, and expand it to <paramref name="length" />
-    /// </summary>
-    /// <param name="length">Length to expand the buffer to.</param>
-    public void ClearSamples(uint length) {
-        if (buf.Length < length) {
-            buf = new double[length];
-        }
-
-        buf.AsSpan().Clear();
+    public readonly void Clear() {
+        Array.Clear(buf);
     }
 }

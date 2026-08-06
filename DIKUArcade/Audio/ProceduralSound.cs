@@ -3,35 +3,36 @@ namespace DIKUArcade.Audio;
 using System;
 using SDLAudio.Sounds;
 
-public delegate float SoundGenerator(float time);
+public delegate float SoundGenerator(float time, uint channel);
 
-public class ProceduralSound : Sound {
+public class ProceduralSound : ISound {
     private readonly SoundGenerator gen;
     private readonly Func<float, bool> isDone;
 
     public ProceduralSound(
         SoundGenerator gen,
-        Func<float, bool> isDone,
-        uint sampleRate,
-        byte channels
-    ) : base(sampleRate, channels) {
+        Func<float, bool> isDone
+    ) {
         this.gen = gen;
         this.isDone = isDone;
     }
 
-    private float Time(ulong playhead) => (float)playhead/SampleRate;
-
-    public override ReadOnlySpan<float> GetSamples(ulong playhead, uint samples) {
+    public ReadOnlySpan<float> GetSamples(
+        ulong playhead,
+        uint samples,
+        uint sampleRate,
+        byte channel
+    ) {
         float[] generated = new float[samples];
 
-        for (uint i = 0; i < generated.Length; i++) {
-            float time = Time(playhead);
-            generated[i] = gen(time);
+        for (uint s = 0; s < samples; s++) {
+            float time = (float)playhead/sampleRate;
+            generated[s] = gen(time, channel);
             playhead++;
         }
 
         return generated.AsSpan();
     }
 
-    public override bool IsDone(ulong playhead) => isDone(Time(playhead));
+    public bool IsDone(ulong playhead, uint sampleRate) => isDone((float)playhead/sampleRate);
 }

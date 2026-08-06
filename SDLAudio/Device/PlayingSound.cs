@@ -3,23 +3,31 @@ namespace SDLAudio.Device;
 using System;
 using Sounds;
 
+public delegate void SoundEventHandler(AudioDevice device);
+
+
 /// <summary>
 /// A stateful helper class representing a sound that is being played, tracking progress and volume.
 /// </summary>
 public class PlayingSound {
     private readonly AudioDevice device;
-    private readonly Sound sound;
+    private readonly ISound sound;
     private ulong playhead;
     private bool canceled;
 
-    public bool Paused { get; private set; }
-    public float Volume { get; private set; }
-    public bool Done => canceled || sound.IsDone(playhead);
+    public event SoundEventHandler? OnDone;
 
-    public ReadOnlySpan<float> PlaySamples(uint samples) {
-        ReadOnlySpan<float> span = sound.GetSamples(playhead, samples);
-        playhead += samples;
+    public bool Paused { get; private set; } = false;
+    public float Volume { get; private set; }
+    public bool Done(uint sampleRate) => canceled || sound.IsDone(playhead, sampleRate);
+
+    public ReadOnlySpan<float> PlaySamples(uint nSamples, uint sampleRate, byte channel) {
+        ReadOnlySpan<float> span = sound.GetSamples(playhead, nSamples, sampleRate, channel);
         return span;
+    }
+
+    public void Advance(uint samples) {
+        playhead += samples;
     }
 
     public void SetVolume(float volume) {
@@ -38,15 +46,19 @@ public class PlayingSound {
         canceled = true;
     }
 
+    public void HandleDone(AudioDevice device) {
+        if (OnDone is not null) {
+            OnDone(device);
+        }
+    }
+
     public PlayingSound(
         AudioDevice device,
-        Sound sound,
-        float volume,
-        bool paused
+        ISound sound,
+        float volume
     ) {
         this.device = device;
         this.sound = sound;
-        Paused = paused;
         Volume = Math.Clamp(volume, 0f, 1f);
         canceled = false;
         playhead = 0;

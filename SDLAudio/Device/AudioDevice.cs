@@ -21,6 +21,7 @@ public class AudioDevice {
 
     public uint SampleRate { get; private init; }
     public byte Channels { get; private init; }
+    public uint Samples { get; private init; }
 
     private readonly Stack<PlayingSound> playingSounds;
 
@@ -28,9 +29,8 @@ public class AudioDevice {
     public bool Paused => sdlAudio.GetAudioDeviceStatus(id) == SDLAudioStatus.PAUSED;
 
     private void Callback(Span<float> stream) {
-        mixer.ClearSamples((uint)stream.Length);
-
         Stack<PlayingSound> continueSounds = new();
+        Stack<PlayingSound> doneSounds = new();
 
         PlayingSound? sound;
         while (true) {
@@ -39,34 +39,44 @@ public class AudioDevice {
             }
 
             if (!sound.Paused) {
-                ReadOnlySpan<float> span = sound.PlaySamples((uint)stream.Length);
+                for (byte c = 0; c < Channels; c++) {
+                    ReadOnlySpan<float> span = sound.PlaySamples(Samples, SampleRate, c);
+                    mixer.AddTrack(span, c, sound.Volume*masterVolume);
+                }
 
-                if (span.Length == 0) { continue; }
-
-                mixer.AddTrack(span, sound.Volume*masterVolume);
+                sound.Advance(Samples);
             }
 
-            if (!sound.Done) {
+            if (sound.Done(SampleRate)) {
+                doneSounds.Push(sound);
+            } else {
                 continueSounds.Push(sound);
             }
         }
 
         mixer.Mix(stream);
+        mixer.Clear();
 
         lock(playingSounds) {
             foreach (PlayingSound continueSound in continueSounds) {
                 playingSounds.Push(continueSound);
             }
         }
+
+        foreach (PlayingSound doneSound in doneSounds) {
+            doneSound.HandleDone(this);
+        }
     }
 
-    private Result<PlayingSound, string> PlaySoundNative(
-        Sound sound,
+    public Result<PlayingSound, string> PlaySound(
+        ISound sound,
+        SoundEventHandler onDone,
         float volume = 1f
     ) {
         if (Stopped) { return new("Device stopped."); }
 
-        PlayingSound playingSound = new(this, sound, volume, false);
+        PlayingSound playingSound = new(this, sound, volume);
+        playingSound.OnDone += onDone;
 
         lock(playingSounds) {
             playingSounds.Push(playingSound);
@@ -75,30 +85,21 @@ public class AudioDevice {
         return new(playingSound);
     }
 
-    public Result<PlayingSound, string> PlaySound(Sound sound, float volume = 1f) =>
-        Convert(sound)
-        .AndThen(converted => PlaySoundNative(converted, volume));
-
-    public Result<Sound, string> Looping(Sound src) =>
-        Convert(src)
-        .MapOk(converted => new Looping(converted, SampleRate, Channels) as Sound);
-
-    public Result<Sound, string> Convert(Sound src) =>
-        src.Convert(sdlAudio, SampleRate, Channels);
-
     internal AudioDevice(
         SDLAudio sdlAudio,
         SDLAudioDeviceID deviceId,
         DeviceCallbackProxy proxy,
         uint sampleRate,
-        byte channels
+        byte channels,
+        ushort samples
     ) {
         this.sdlAudio = sdlAudio;
         SampleRate = sampleRate;
         Channels = channels;
+        Samples = samples;
         id = deviceId;
         playingSounds = new();
-        mixer = new();
+        mixer = new(Channels, samples);
         proxy.Callback = Callback;
         this.proxy = proxy;
 
